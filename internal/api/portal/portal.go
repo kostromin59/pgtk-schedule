@@ -135,6 +135,21 @@ func (p *portal) CurrentWeek() (models.Week, error) {
 	}, nil
 }
 
+func (p *portal) Streams() []models.Stream {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	streams := make([]models.Stream, len(p.streams))
+	for i, s := range p.streams {
+		streams[i] = models.Stream{
+			Name:       s.Name,
+			Substreams: s.Substreams,
+		}
+	}
+
+	return streams
+}
+
 func (p *portal) currentWeek() (Week, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
