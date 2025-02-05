@@ -12,7 +12,6 @@ type Week struct {
 
 type WeekDate struct {
 	time.Time
-	Initial string
 }
 
 func (wd *WeekDate) UnmarshalJSON(b []byte) error {
@@ -22,7 +21,6 @@ func (wd *WeekDate) UnmarshalJSON(b []byte) error {
 	}
 
 	wd.Time = t
-	wd.Initial = string(b)
 
 	return nil
 }

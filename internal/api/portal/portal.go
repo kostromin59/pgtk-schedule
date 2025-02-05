@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"pgtk-schedule/internal/models"
 	"regexp"
 	"strings"
 	"sync"
@@ -92,7 +93,7 @@ func (p *portal) Update() error {
 	p.mu.Unlock()
 
 	// Substreams
-	week, err := p.CurrentWeek()
+	week, err := p.currentWeek()
 	if err != nil {
 		return fmt.Errorf("unable to collect substreams: %w", err)
 	}
@@ -121,7 +122,20 @@ func (p *portal) Update() error {
 	return nil
 }
 
-func (p *portal) CurrentWeek() (Week, error) {
+func (p *portal) CurrentWeek() (models.Week, error) {
+	w, err := p.currentWeek()
+	if err != nil {
+		return models.Week{}, err
+	}
+
+	return models.Week{
+		Text:      w.Text,
+		StartDate: w.StartDate.Time,
+		EndDate:   w.EndDate.Time,
+	}, nil
+}
+
+func (p *portal) currentWeek() (Week, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
