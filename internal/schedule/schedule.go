@@ -4,11 +4,10 @@ import "pgtk-schedule/internal/models"
 
 type portal interface {
 	Update() error
-	CurrentWeek() (models.Week, error) // Do I need this?
+	// CurrentWeek() (models.Week, error) // Do I need this?
 	Streams() []models.Stream
-	Lessons() []models.Lesson
-	StreamLessons(string) []models.Lesson
-	TodayStreamLessons(string) []models.Lesson
+	Lessons(stream string) []models.Lesson
+	TodayLessons(stream string) []models.Lesson
 }
 
 type schedule struct {
