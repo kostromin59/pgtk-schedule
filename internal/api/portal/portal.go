@@ -129,6 +129,7 @@ func (p *portal) CurrentWeek() (models.Week, error) {
 	}
 
 	return models.Week{
+		ID:        fmt.Sprintf("%d", w.Value),
 		Text:      w.Text,
 		StartDate: w.StartDate.Time,
 		EndDate:   w.EndDate.Time,
@@ -142,6 +143,7 @@ func (p *portal) Streams() []models.Stream {
 	streams := make([]models.Stream, len(p.streams))
 	for i, s := range p.streams {
 		streams[i] = models.Stream{
+			ID:         s.Value,
 			Name:       s.Name,
 			Substreams: s.Substreams,
 		}
