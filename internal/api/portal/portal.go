@@ -23,6 +23,7 @@ const (
 	scheduleUrl = baseUrl + "/public_shedule"
 	weeksUrl    = baseUrl + "/get_weekdates_actual"
 	gridUrl     = baseUrl + "/public_shedule_spo_grid"
+	lessonsUrl  = baseUrl + "/public_getsheduleclasses_spo"
 
 	saturdayNextDayHours = 14
 	timezone             = "Asia/Yekaterinburg"
@@ -37,6 +38,7 @@ type portal struct {
 	term        string
 	streams     []Stream
 	weeks       []Week
+	lessons     map[string][]Lesson
 	mu          sync.RWMutex
 }
 
@@ -116,7 +118,24 @@ func (p *portal) Update() error {
 	p.weeks = weeks
 	p.streams = streams
 
-	// TODO: collect schedules
+	wg = sync.WaitGroup{}
+	var lessons map[string][]Lesson
+	for _, stream := range streams {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			l, err := p.collectSchedule(stream.Value, term, studyYearId, week.StartDate.Time, week.EndDate.Time)
+			if err != nil {
+				log.Println(err.Error(), stream.Name)
+				return
+			}
+
+			lessons[stream.Value] = l
+		}()
+	}
+
+	wg.Wait()
+	p.lessons = lessons
 
 	return nil
 }
@@ -319,4 +338,40 @@ func (p *portal) collectSubstreams(stream, term, studyYearId string, dateweek in
 	})
 
 	return substreams, nil
+}
+
+func (p *portal) collectSchedule(stream, term, studyYearId string, startDate, endDate time.Time) ([]Lesson, error) {
+	v := url.Values{}
+	v.Set("studyyear_id", studyYearId)
+	v.Set("stream_id", stream)
+	v.Set("term", term)
+	v.Set("start_date", startDate.Format("02.01.2006"))
+	v.Set("end_date", endDate.Format("02.01.2006"))
+	encoded := v.Encode()
+
+	req, err := http.NewRequest(http.MethodPost, lessonsUrl, strings.NewReader(encoded))
+	if err != nil {
+		return nil, fmt.Errorf("unable to create lessons request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	c := http.DefaultClient
+	c.Timeout = 30 * time.Second
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get lessons: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+	}
+
+	var lessons []Lesson
+	if err := json.NewDecoder(resp.Body).Decode(&lessons); err != nil {
+		return nil, fmt.Errorf("unable to decode lessons: %w", err)
+	}
+
+	return lessons, nil
 }
