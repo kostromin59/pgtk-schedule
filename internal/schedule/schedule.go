@@ -6,6 +6,9 @@ type portal interface {
 	Update() error
 	CurrentWeek() (models.Week, error)
 	Streams() []models.Stream
+	Lessons() []models.Lesson
+	StreamLessons(string) []models.Lesson
+	TodayStreamLessons(string) []models.Lesson
 }
 
 type schedule struct {
