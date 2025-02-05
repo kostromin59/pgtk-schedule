@@ -157,6 +157,64 @@ func (p *portal) Update() error {
 // 	}, nil
 // }
 
+func (p *portal) Lessons(stream string) ([]models.Lesson, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if p.lessons == nil {
+		return nil, models.ErrLessonsAreEmpty
+	}
+
+	l, ok := p.lessons[stream]
+	if !ok {
+		return nil, models.ErrStreamIsUnknown
+	}
+
+	lessons := make([]models.Lesson, 0, len(l))
+	for _, lesson := range l {
+		lessons = append(lessons, models.Lesson{
+			ID:        lesson.ID,
+			Name:      lesson.Name,
+			Teacher:   lesson.Teacher,
+			Substream: lesson.Substream,
+			Cabinet:   lesson.Cabinet,
+			Type:      lesson.Type,
+			Stream:    fmt.Sprintf("%d", lesson.StreamID),
+			DateStart: lesson.DateStart,
+			DateEnd:   lesson.DateEnd,
+		})
+	}
+
+	return lessons, nil
+}
+
+func (p *portal) TodayLessons(stream string) ([]models.Lesson, error) {
+	return p.dateLessons(stream, time.Now())
+}
+
+func (p *portal) TommorowLessons(stream string) ([]models.Lesson, error) {
+	return p.dateLessons(stream, time.Now().Add(24*time.Hour))
+}
+
+func (p *portal) dateLessons(stream string, date time.Time) ([]models.Lesson, error) {
+	l, err := p.Lessons(stream)
+	if err != nil {
+		return nil, err
+	}
+
+	date = date.Truncate(24 * time.Hour)
+
+	lessons := make([]models.Lesson, 0, len(l))
+	for _, lesson := range l {
+		lessonDate := lesson.DateStart.Truncate(24 * time.Hour)
+		if date.Equal(lessonDate) {
+			lessons = append(lessons, lesson)
+		}
+	}
+
+	return lessons, nil
+}
+
 func (p *portal) Streams() []models.Stream {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

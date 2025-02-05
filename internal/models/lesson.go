@@ -1,6 +1,13 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrLessonsAreEmpty = errors.New("lessons are empty")
+)
 
 type Lesson struct {
 	ID        string

@@ -1,6 +1,8 @@
 package portal
 
-import "time"
+import (
+	"time"
+)
 
 type Lesson struct {
 	ID        string    `json:"id,omitempty"`
