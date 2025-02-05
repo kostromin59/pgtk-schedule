@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"pgtk-schedule/internal/models"
+	"pgtk-schedule/pkg/request"
 	"regexp"
 	"strings"
 	"sync"
@@ -47,23 +47,13 @@ func NewPortal() *portal {
 }
 
 func (p *portal) Update() error {
-	resp, err := http.Get(baseUrl)
+	res, err := request.New(baseUrl).Do()
 	if err != nil {
-		return fmt.Errorf("unable to get site: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("bad status code: %d", resp.StatusCode)
+		return err
 	}
 
-	html, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("unable to read body: %w", err)
-	}
-
-	stringHtml := string(html)
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	stringHtml := string(res.Body())
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(res.Body()))
 	if err != nil {
 		return fmt.Errorf("unable to create document: %w", err)
 	}
@@ -322,27 +312,17 @@ func (p *portal) collectWeeks(studyYearId string) ([]Week, error) {
 		return nil, fmt.Errorf("unable to marhal weeks body: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, weeksUrl, bytes.NewReader(jsonBody))
+	res, err := request.New(weeksUrl).
+		Method(http.MethodPost).
+		ContentType("application/json").
+		Body(bytes.NewReader(jsonBody)).
+		Do()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create weeks request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	c := http.DefaultClient
-	c.Timeout = 30 * time.Second
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get weeks: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+		return nil, err
 	}
 
 	var weeks []Week
-	if err := json.NewDecoder(resp.Body).Decode(&weeks); err != nil {
+	if err := json.Unmarshal(res.Body(), &weeks); err != nil {
 		return nil, fmt.Errorf("unable to decode weeks: %w", err)
 	}
 
@@ -357,26 +337,17 @@ func (p *portal) collectSubstreams(stream, term, studyYearId string, dateweek in
 	v.Set("dateweek", fmt.Sprintf("%d", dateweek))
 	encoded := v.Encode()
 
-	req, err := http.NewRequest(http.MethodPost, gridUrl, strings.NewReader(encoded))
+	res, err := request.New(gridUrl).
+		Method(http.MethodPost).
+		Body(strings.NewReader(encoded)).
+		ContentType("application/x-www-form-urlencoded").
+		Do()
+
 	if err != nil {
-		return nil, fmt.Errorf("unable to create weeks request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	c := http.DefaultClient
-	c.Timeout = 30 * time.Second
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get grid: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+		return nil, err
 	}
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(res.Body()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create document: %w", err)
 	}
@@ -407,27 +378,18 @@ func (p *portal) collectSchedule(stream, term, studyYearId string, startDate, en
 	v.Set("end_date", endDate.Format("02.01.2006"))
 	encoded := v.Encode()
 
-	req, err := http.NewRequest(http.MethodPost, lessonsUrl, strings.NewReader(encoded))
+	res, err := request.New(lessonsUrl).
+		Method(http.MethodPost).
+		Body(strings.NewReader(encoded)).
+		ContentType("application/x-www-form-urlencoded").
+		Do()
+
 	if err != nil {
-		return nil, fmt.Errorf("unable to create lessons request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	c := http.DefaultClient
-	c.Timeout = 30 * time.Second
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get lessons: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+		return nil, err
 	}
 
 	var lessons []Lesson
-	if err := json.NewDecoder(resp.Body).Decode(&lessons); err != nil {
+	if err := json.Unmarshal(res.Body(), &lessons); err != nil {
 		return nil, fmt.Errorf("unable to decode lessons: %w", err)
 	}
 
