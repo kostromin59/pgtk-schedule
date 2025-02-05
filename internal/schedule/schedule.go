@@ -8,4 +8,12 @@ type portal interface {
 	Streams() []models.Stream
 }
 
-type schedule struct{}
+type schedule struct {
+	portal portal
+}
+
+func NewSchedule(portal portal) *schedule {
+	return &schedule{
+		portal: portal,
+	}
+}
