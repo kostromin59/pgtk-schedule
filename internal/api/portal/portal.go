@@ -130,23 +130,6 @@ func (p *portal) Update() error {
 	return nil
 }
 
-// func (p *portal) CurrentWeek() (models.Week, error) {
-// 	p.mu.RLock()
-// 	defer p.mu.RUnlock()
-
-// 	w, err := p.currentWeek(p.weeks)
-// 	if err != nil {
-// 		return models.Week{}, err
-// 	}
-
-// 	return models.Week{
-// 		ID:        fmt.Sprintf("%d", w.Value),
-// 		Text:      w.Text,
-// 		StartDate: w.StartDate.Time,
-// 		EndDate:   w.EndDate.Time,
-// 	}, nil
-// }
-
 func (p *portal) Lessons(stream string) ([]models.Lesson, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
