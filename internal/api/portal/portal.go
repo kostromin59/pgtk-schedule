@@ -86,14 +86,8 @@ func (p *portal) Update() error {
 		return fmt.Errorf("unable to collect weeks: %w", err)
 	}
 
-	p.mu.Lock()
-	p.studyYearId = studyYearId
-	p.term = term
-	p.weeks = weeks
-	p.mu.Unlock()
-
 	// Substreams
-	week, err := p.currentWeek()
+	week, err := p.currentWeek(weeks)
 	if err != nil {
 		return fmt.Errorf("unable to collect substreams: %w", err)
 	}
@@ -116,14 +110,22 @@ func (p *portal) Update() error {
 	wg.Wait()
 
 	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.studyYearId = studyYearId
+	p.term = term
+	p.weeks = weeks
 	p.streams = streams
-	p.mu.Unlock()
+
+	// TODO: collect schedules
 
 	return nil
 }
 
 func (p *portal) CurrentWeek() (models.Week, error) {
-	w, err := p.currentWeek()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	w, err := p.currentWeek(p.weeks)
 	if err != nil {
 		return models.Week{}, err
 	}
@@ -152,10 +154,7 @@ func (p *portal) Streams() []models.Stream {
 	return streams
 }
 
-func (p *portal) currentWeek() (Week, error) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-
+func (p *portal) currentWeek(weeks []Week) (Week, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		return Week{}, fmt.Errorf("unable to load timezone: %w", err)
@@ -163,7 +162,7 @@ func (p *portal) currentWeek() (Week, error) {
 
 	now := time.Now().In(loc)
 	index := 0
-	for i, w := range p.weeks {
+	for i, w := range weeks {
 		if w.Selected {
 			index = i
 			break
