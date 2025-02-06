@@ -4,31 +4,45 @@ import (
 	"context"
 	"log"
 	"pgtk-schedule/internal/models"
+	"sync"
 	"time"
 )
 
 type portal interface {
-	// Update schedule
 	Update() error
-	// Get streams
 	Streams() []models.Stream
-	// Get current week lessons
 	CurrentWeekLessons(stream string) ([]models.Lesson, error)
 }
 
 type schedule struct {
 	portal portal
+
+	// Stream lessons cache by date
+	cache map[time.Time]map[string][]models.Lesson
+	mu    sync.RWMutex
 }
 
 func NewSchedule(portal portal) *schedule {
 	return &schedule{
 		portal: portal,
+		cache:  make(map[time.Time]map[string][]models.Lesson),
 	}
+}
+
+func (s *schedule) Update() error {
+	if err := s.portal.Update(); err != nil {
+		return err
+	}
+
+	// Clear cache
+	s.cache = make(map[time.Time]map[string][]models.Lesson)
+
+	return nil
 }
 
 func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
 	go func() {
-		if err := s.portal.Update(); err != nil {
+		if err := s.Update(); err != nil {
 			log.Printf("error while updating portal: %s", err.Error())
 		}
 
@@ -36,7 +50,7 @@ func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
 		for {
 			select {
 			case <-ticker.C:
-				if err := s.portal.Update(); err != nil {
+				if err := s.Update(); err != nil {
 					log.Printf("error while updating portal: %s", err.Error())
 				}
 			case <-ctx.Done():
@@ -58,7 +72,6 @@ func (s *schedule) dateLessons(stream string, date time.Time) ([]models.Lesson, 
 
 	date = date.Truncate(24 * time.Hour)
 
-	// TODO: Cache?
 	lessons := make([]models.Lesson, 0, len(l))
 	for _, lesson := range l {
 		lessonDate := lesson.DateStart.Truncate(24 * time.Hour)
@@ -70,12 +83,53 @@ func (s *schedule) dateLessons(stream string, date time.Time) ([]models.Lesson, 
 	return lessons, nil
 }
 
+func (s *schedule) dateLessonsWithCache(stream string, date time.Time) ([]models.Lesson, error) {
+	s.mu.RLock()
+	dateCache, ok := s.cache[date]
+	s.mu.RUnlock()
+
+	if !ok {
+		lessons, err := s.dateLessons(stream, date)
+		if err != nil {
+			return nil, err
+		}
+
+		// Save into cache
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.cache[date] = map[string][]models.Lesson{
+			stream: lessons,
+		}
+
+		return lessons, nil
+	}
+
+	s.mu.RLock()
+	streamCache, ok := dateCache[stream]
+	s.mu.RUnlock()
+
+	if !ok {
+		lessons, err := s.dateLessons(stream, date)
+		if err != nil {
+			return nil, err
+		}
+
+		// Save into cache
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		dateCache[stream] = lessons
+		return lessons, nil
+	}
+
+	return streamCache, nil
+}
+
 func (s *schedule) TodayLessons(stream string) ([]models.Lesson, error) {
-	return s.dateLessons(stream, time.Now())
+	return s.dateLessonsWithCache(stream, time.Now())
 }
 
 func (s *schedule) TomorrowLessons(stream string) ([]models.Lesson, error) {
-	return s.dateLessons(stream, time.Now().Add(24*time.Hour))
+	return s.dateLessonsWithCache(stream, time.Now().Add(24*time.Hour))
 }
 
 func (s *schedule) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
