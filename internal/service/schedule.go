@@ -15,12 +15,25 @@ type portal interface {
 
 type schedule struct {
 	portal portal
+
+	onStreamLessonsChange func(stream string, lessons []models.Lesson)
+	previousLessons       map[string]models.Lesson
 }
 
 func NewSchedule(portal portal) *schedule {
 	return &schedule{
-		portal: portal,
+		portal:          portal,
+		previousLessons: make(map[string]models.Lesson),
 	}
+}
+
+func (s *schedule) Update() error {
+	if err := s.portal.Update(); err != nil {
+		return err
+	}
+
+	// TODO: check changes
+	return nil
 }
 
 func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
@@ -76,4 +89,8 @@ func (s *schedule) TomorrowLessons(stream string) ([]models.Lesson, error) {
 
 func (s *schedule) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
 	return s.portal.CurrentWeekLessons(stream)
+}
+
+func (s *schedule) OnStreamLessonsChange(fn func(stream string, lessons []models.Lesson)) {
+	s.onStreamLessonsChange = fn
 }
