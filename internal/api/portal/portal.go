@@ -130,7 +130,7 @@ func (p *portal) Update() error {
 	return nil
 }
 
-func (p *portal) Lessons(stream string) ([]models.Lesson, error) {
+func (p *portal) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
@@ -156,33 +156,6 @@ func (p *portal) Lessons(stream string) ([]models.Lesson, error) {
 			DateStart: lesson.DateStart,
 			DateEnd:   lesson.DateEnd,
 		})
-	}
-
-	return lessons, nil
-}
-
-func (p *portal) TodayLessons(stream string) ([]models.Lesson, error) {
-	return p.dateLessons(stream, time.Now())
-}
-
-func (p *portal) TommorowLessons(stream string) ([]models.Lesson, error) {
-	return p.dateLessons(stream, time.Now().Add(24*time.Hour))
-}
-
-func (p *portal) dateLessons(stream string, date time.Time) ([]models.Lesson, error) {
-	l, err := p.Lessons(stream)
-	if err != nil {
-		return nil, err
-	}
-
-	date = date.Truncate(24 * time.Hour)
-
-	lessons := make([]models.Lesson, 0, len(l))
-	for _, lesson := range l {
-		lessonDate := lesson.DateStart.Truncate(24 * time.Hour)
-		if date.Equal(lessonDate) {
-			lessons = append(lessons, lesson)
-		}
 	}
 
 	return lessons, nil

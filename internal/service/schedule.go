@@ -8,11 +8,12 @@ import (
 )
 
 type portal interface {
+	// Update schedule
 	Update() error
+	// Get streams
 	Streams() []models.Stream
-	Lessons(stream string) ([]models.Lesson, error)
-	TodayLessons(stream string) ([]models.Lesson, error)
-	TomorrowLessons(stream string) ([]models.Lesson, error)
+	// Get current week lessons
+	CurrentWeekLessons(stream string) ([]models.Lesson, error)
 }
 
 type schedule struct {
@@ -49,14 +50,34 @@ func (s *schedule) Streams() []models.Stream {
 	return s.portal.Streams()
 }
 
+func (s *schedule) dateLessons(stream string, date time.Time) ([]models.Lesson, error) {
+	l, err := s.portal.CurrentWeekLessons(stream)
+	if err != nil {
+		return nil, err
+	}
+
+	date = date.Truncate(24 * time.Hour)
+
+	// TODO: Cache?
+	lessons := make([]models.Lesson, 0, len(l))
+	for _, lesson := range l {
+		lessonDate := lesson.DateStart.Truncate(24 * time.Hour)
+		if date.Equal(lessonDate) {
+			lessons = append(lessons, lesson)
+		}
+	}
+
+	return lessons, nil
+}
+
 func (s *schedule) TodayLessons(stream string) ([]models.Lesson, error) {
-	return s.portal.TodayLessons(stream)
+	return s.dateLessons(stream, time.Now())
 }
 
 func (s *schedule) TomorrowLessons(stream string) ([]models.Lesson, error) {
-	return s.portal.TomorrowLessons(stream)
+	return s.dateLessons(stream, time.Now().Add(24*time.Hour))
 }
 
 func (s *schedule) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
-	return s.portal.Lessons(stream)
+	return s.portal.CurrentWeekLessons(stream)
 }
