@@ -14,4 +14,6 @@ type Lesson struct {
 	Type      string    `json:"classtype_name,omitempty"`
 	DateStart time.Time `json:"date_start,omitempty"`
 	DateEnd   time.Time `json:"date_end,omitempty"`
+	TimeStart string    `json:"daytime_start,omitempty"`
+	TimeEnd   string    `json:"daytime_end,omitempty"`
 }

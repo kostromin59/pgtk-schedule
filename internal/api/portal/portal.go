@@ -145,6 +145,39 @@ func (p *portal) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
 
 	lessons := make([]models.Lesson, 0, len(l))
 	for _, lesson := range l {
+		startTimeFormatted := strings.Replace(lesson.TimeStart, ".", ":", 1)
+		endTimeFormatted := strings.Replace(lesson.TimeEnd, ".", ":", 1)
+
+		parsedStartTime, err := time.Parse("15:04", startTimeFormatted)
+		if err != nil {
+			return nil, err
+		}
+
+		parsedEndTime, err := time.Parse("15:04", endTimeFormatted)
+		if err != nil {
+			return nil, err
+		}
+
+		combinedStartDateTime := time.Date(
+			lesson.DateStart.Year(),
+			lesson.DateStart.Month(),
+			lesson.DateStart.Day(),
+			parsedStartTime.Hour(),
+			parsedStartTime.Minute(),
+			0, 0,
+			lesson.DateStart.Location(),
+		)
+
+		combinedEndDateTime := time.Date(
+			lesson.DateEnd.Year(),
+			lesson.DateEnd.Month(),
+			lesson.DateEnd.Day(),
+			parsedEndTime.Hour(),
+			parsedEndTime.Minute(),
+			0, 0,
+			lesson.DateEnd.Location(),
+		)
+
 		lessons = append(lessons, models.Lesson{
 			ID:        lesson.ID,
 			Name:      lesson.Name,
@@ -153,8 +186,8 @@ func (p *portal) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
 			Cabinet:   lesson.Cabinet,
 			Type:      lesson.Type,
 			Stream:    fmt.Sprintf("%d", lesson.StreamID),
-			DateStart: lesson.DateStart,
-			DateEnd:   lesson.DateEnd,
+			DateStart: combinedStartDateTime,
+			DateEnd:   combinedEndDateTime,
 		})
 	}
 
