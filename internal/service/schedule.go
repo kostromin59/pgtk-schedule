@@ -15,23 +15,13 @@ type portal interface {
 	TomorrowLessons(stream string) ([]models.Lesson, error)
 }
 
-type studentRepository interface {
-	Create(ctx context.Context, id int64, nickname string) error
-	FindByID(ctx context.Context, id int64) (models.Student, error)
-	UpdateStream(ctx context.Context, id int64, stream string) error
-	UpdateSubstream(ctx context.Context, id int64, substream string) error
-	UpdateNickname(ctx context.Context, id int64, nickname string) error
-}
-
 type schedule struct {
-	portal      portal
-	studentRepo studentRepository
+	portal portal
 }
 
-func NewSchedule(portal portal, studentRepo studentRepository) *schedule {
+func NewSchedule(portal portal) *schedule {
 	return &schedule{
-		portal:      portal,
-		studentRepo: studentRepo,
+		portal: portal,
 	}
 }
 
@@ -53,4 +43,20 @@ func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
 			}
 		}
 	}()
+}
+
+func (s *schedule) Streams() []models.Stream {
+	return s.portal.Streams()
+}
+
+func (s *schedule) TodayLessons(stream string) ([]models.Lesson, error) {
+	return s.portal.TodayLessons(stream)
+}
+
+func (s *schedule) TomorrowLessons(stream string) ([]models.Lesson, error) {
+	return s.portal.TomorrowLessons(stream)
+}
+
+func (s *schedule) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
+	return s.portal.Lessons(stream)
 }
