@@ -50,7 +50,7 @@ func (s *schedule) CurrentWeekLessons() telebot.HandlerFunc {
 		}
 
 		// TODO: Rate limiter + formatting
-		return ctx.Send(lessons)
+		return ctx.Send(s.lessonsToMessage(lessons))
 	}
 }
 
