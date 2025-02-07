@@ -10,7 +10,7 @@ import (
 type portal interface {
 	Update() error
 	Streams() []models.Stream
-	CurrentWeekLessons(stream string) ([]models.Lesson, error)
+	CurrentWeekLessons(stream, substream string) ([]models.Lesson, error)
 }
 
 type schedule struct {
@@ -60,8 +60,8 @@ func (s *schedule) Streams() []models.Stream {
 	return s.portal.Streams()
 }
 
-func (s *schedule) dateLessons(stream string, date time.Time) ([]models.Lesson, error) {
-	l, err := s.portal.CurrentWeekLessons(stream)
+func (s *schedule) dateLessons(stream, substream string, date time.Time) ([]models.Lesson, error) {
+	l, err := s.portal.CurrentWeekLessons(stream, substream)
 	if err != nil {
 		return nil, err
 	}
@@ -71,26 +71,29 @@ func (s *schedule) dateLessons(stream string, date time.Time) ([]models.Lesson, 
 	lessons := make([]models.Lesson, 0, len(l))
 	for _, lesson := range l {
 		lessonDate := lesson.DateStart.Truncate(24 * time.Hour)
-		if date.Equal(lessonDate) {
-			lessons = append(lessons, lesson)
+		if !date.Equal(lessonDate) {
+			continue
 		}
+
+		lessons = append(lessons, lesson)
 	}
 
 	return lessons, nil
 }
 
-func (s *schedule) TodayLessons(stream string) ([]models.Lesson, error) {
-	return s.dateLessons(stream, time.Now())
+func (s *schedule) TodayLessons(stream, substream string) ([]models.Lesson, error) {
+	return s.dateLessons(stream, substream, time.Now())
 }
 
-func (s *schedule) TomorrowLessons(stream string) ([]models.Lesson, error) {
-	return s.dateLessons(stream, time.Now().Add(24*time.Hour))
+func (s *schedule) TomorrowLessons(stream, substream string) ([]models.Lesson, error) {
+	return s.dateLessons(stream, substream, time.Now().Add(24*time.Hour))
 }
 
-func (s *schedule) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
-	return s.portal.CurrentWeekLessons(stream)
+func (s *schedule) CurrentWeekLessons(stream, substream string) ([]models.Lesson, error) {
+	return s.portal.CurrentWeekLessons(stream, substream)
+
 }
 
-func (s *schedule) OnStreamLessonsChange(fn func(stream string, lessons []models.Lesson)) {
-	s.onStreamLessonsChange = fn
-}
+// func (s *schedule) OnStreamLessonsChange(fn func(stream string, lessons []models.Lesson)) {
+// 	s.onStreamLessonsChange = fn
+// }

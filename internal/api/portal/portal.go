@@ -130,7 +130,7 @@ func (p *portal) Update() error {
 	return nil
 }
 
-func (p *portal) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
+func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
@@ -145,6 +145,10 @@ func (p *portal) CurrentWeekLessons(stream string) ([]models.Lesson, error) {
 
 	lessons := make([]models.Lesson, 0, len(l))
 	for _, lesson := range l {
+		if strings.Contains(lesson.Type, "подгрупп") && lesson.Substream != substream {
+			continue
+		}
+
 		startTimeFormatted := strings.Replace(lesson.TimeStart, ".", ":", 1)
 		endTimeFormatted := strings.Replace(lesson.TimeEnd, ".", ":", 1)
 
