@@ -28,7 +28,13 @@ func NewStudent(repo studentRepository) *student {
 func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			if err := s.validateStudent(ctx); err == nil {
+			if student, err := s.validateStudent(ctx); err == nil {
+				ctx.Set(KeyStream, *student.Stream)
+
+				if student.Substream != nil {
+					ctx.Set(KeySubstream, *student.Substream)
+				}
+
 				return next(ctx)
 			}
 
@@ -41,24 +47,19 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 	}
 }
 
-func (s *student) validateStudent(ctx telebot.Context) error {
+func (s *student) validateStudent(ctx telebot.Context) (models.Student, error) {
 	id := ctx.Sender().ID
 
 	student, err := s.repo.FindByID(context.Background(), id)
 	if err != nil {
-		return err
+		return student, err
 	}
 
 	if student.Stream == nil {
-		return models.ErrStreamIsUnknown
-	}
-	ctx.Set(KeyStream, *student.Stream)
-
-	if student.Substream != nil {
-		ctx.Set(KeySubstream, *student.Substream)
+		return student, models.ErrStreamIsUnknown
 	}
 
-	return nil
+	return student, nil
 }
 
 func (s *student) registerStudent(ctx telebot.Context) error {
@@ -68,6 +69,6 @@ func (s *student) registerStudent(ctx telebot.Context) error {
 	return s.repo.Create(context.Background(), id, nickname)
 }
 
-func (s *student) sendMainKeyboard(ctx telebot.Context) error {
+func (s *student) SendMainKeyboard(ctx telebot.Context) error {
 	return ctx.Reply("main keyboard - TODO!")
 }
