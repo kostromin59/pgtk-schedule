@@ -2,6 +2,7 @@ package tg
 
 import (
 	"context"
+	"errors"
 	"pgtk-schedule/internal/models"
 
 	"gopkg.in/telebot.v4"
@@ -28,7 +29,8 @@ func NewStudent(repo studentRepository) *student {
 func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			if student, err := s.validateStudent(ctx); err == nil {
+			student, err := s.validateStudent(ctx)
+			if err == nil {
 				ctx.Set(KeyStream, *student.Stream)
 
 				if student.Substream != nil {
@@ -38,11 +40,18 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 				return next(ctx)
 			}
 
-			if err := s.registerStudent(ctx); err != nil {
-				return err
+			if errors.Is(err, models.ErrStreamIsUnknown) {
+				ctx.Reply("unknown stream")
+				return nil
 			}
 
-			return next(ctx)
+			if errors.Is(err, models.ErrStudentNotFound) {
+				if err := s.registerStudent(ctx); err != nil {
+					return err
+				}
+			}
+
+			return err
 		}
 	}
 }

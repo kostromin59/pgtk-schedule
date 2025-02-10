@@ -32,7 +32,7 @@ func (s *student) FindByID(ctx context.Context, id int64) (models.Student, error
 		ID: id,
 	}
 
-	err := row.Scan(&student.Nickname, &student.Stream, student.Substream)
+	err := row.Scan(&student.Nickname, &student.Stream, &student.Substream)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return student, models.ErrStudentNotFound
