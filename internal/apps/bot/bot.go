@@ -3,6 +3,7 @@ package bot
 import (
 	"log"
 	"pgtk-schedule/configs"
+	"pgtk-schedule/internal/api/portal"
 	"pgtk-schedule/internal/repository"
 	"pgtk-schedule/internal/transport/tg"
 	"pgtk-schedule/pkg/database"
@@ -18,9 +19,19 @@ func Run(cfg configs.Bot) error {
 			log.Println(err.Error(), ctx.Sender().ID)
 			ctx.Reply("Что-то пошло не так!")
 		},
+		Poller: &telebot.LongPoller{
+			AllowedUpdates: []string{"message", "chat_member", "callback_query", "poll", "inline_query"},
+		},
 	}
 
 	bot, err := telebot.NewBot(pref)
+	if err != nil {
+		return err
+	}
+
+	// Api
+	portal := portal.New()
+	err = portal.Update()
 	if err != nil {
 		return err
 	}
@@ -35,7 +46,7 @@ func Run(cfg configs.Bot) error {
 	studentRepo := repository.NewStudent(pool)
 
 	// Handlers
-	studentHandlers := tg.NewStudent(studentRepo)
+	studentHandlers := tg.NewStudent(bot, studentRepo, portal)
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
 		return ctx.Reply("start command")

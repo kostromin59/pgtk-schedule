@@ -3,6 +3,7 @@ package tg
 import (
 	"context"
 	"errors"
+	"fmt"
 	"pgtk-schedule/internal/models"
 
 	"gopkg.in/telebot.v4"
@@ -16,13 +17,21 @@ type studentRepository interface {
 	UpdateNickname(ctx context.Context, id int64, nickname string) error
 }
 
-type student struct {
-	repo studentRepository
+type portal interface {
+	Streams() []models.Stream
 }
 
-func NewStudent(repo studentRepository) *student {
+type student struct {
+	repo   studentRepository
+	portal portal
+	bot    *telebot.Bot
+}
+
+func NewStudent(bot *telebot.Bot, repo studentRepository, portal portal) *student {
 	return &student{
-		repo: repo,
+		repo:   repo,
+		portal: portal,
+		bot:    bot,
 	}
 }
 
@@ -41,8 +50,7 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 			}
 
 			if errors.Is(err, models.ErrStreamIsUnknown) {
-				ctx.Reply("unknown stream")
-				return nil
+				return s.fillStream(ctx)
 			}
 
 			if errors.Is(err, models.ErrStudentNotFound) {
@@ -80,4 +88,18 @@ func (s *student) registerStudent(ctx telebot.Context) error {
 
 func (s *student) SendMainKeyboard(ctx telebot.Context) error {
 	return ctx.Reply("main keyboard - TODO!")
+}
+
+func (s *student) fillStream(ctx telebot.Context) error {
+	streams := s.portal.Streams()
+	// r := s.bot.NewMarkup()
+	// b := r.Data("test", "set test", "1")
+	// r.Inline(r.Row(b))
+
+	// s.bot.Handle(&b, func(ctx telebot.Context) error {
+	// 	fmt.Println("fff")
+	// 	return ctx.Respond()
+	// })
+
+	return ctx.Reply(fmt.Sprintf("there are %d streams in portal", len(streams)))
 }

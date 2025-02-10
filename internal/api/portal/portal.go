@@ -42,13 +42,14 @@ type portal struct {
 	mu          sync.RWMutex
 }
 
-func NewPortal() *portal {
+func New() *portal {
 	return &portal{}
 }
 
 func (p *portal) Update() error {
-	res, err := request.New(baseUrl).Do()
+	res, err := request.New(scheduleUrl).Do()
 	if err != nil {
+		fmt.Println(res.StatusCode())
 		return err
 	}
 
@@ -89,7 +90,7 @@ func (p *portal) Update() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			substreams, err := p.collectSubstreams(s.Value, p.term, p.studyYearId, week.Value)
+			substreams, err := p.collectSubstreams(s.Value, term, studyYearId, week.Value)
 			if err != nil {
 				log.Println(err.Error(), s)
 				return
@@ -109,7 +110,7 @@ func (p *portal) Update() error {
 	p.streams = streams
 
 	wg = sync.WaitGroup{}
-	var lessons map[string][]Lesson
+	lessons := make(map[string][]Lesson, len(streams))
 	for _, stream := range streams {
 		wg.Add(1)
 		go func() {
@@ -221,12 +222,16 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 	}
 
 	now := time.Now().In(loc)
-	index := 0
+	index := -1
 	for i, w := range weeks {
 		if w.Selected {
 			index = i
 			break
 		}
+	}
+
+	if index == -1 {
+		return Week{}, errors.New("current week not found")
 	}
 
 	if index == len(p.weeks)-1 {
@@ -242,12 +247,12 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 		return p.weeks[index+1], nil
 	}
 
-	return Week{}, errors.New("current week not found")
+	return weeks[index], nil
 }
 
 func (p *portal) extractStudyYearId(html string) (string, error) {
 	match := regexStudyYearId.FindStringSubmatch(html)
-	if len(match) <= 1 {
+	if len(match) < 2 {
 		return "", errors.New("study year id not found")
 	}
 
