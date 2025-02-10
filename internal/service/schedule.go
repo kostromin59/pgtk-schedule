@@ -9,7 +9,6 @@ import (
 
 type portal interface {
 	Update() error
-	Streams() []models.Stream
 	CurrentWeekLessons(stream, substream string) ([]models.Lesson, error)
 }
 
@@ -54,10 +53,6 @@ func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
 			}
 		}
 	}()
-}
-
-func (s *schedule) Streams() []models.Stream {
-	return s.portal.Streams()
 }
 
 func (s *schedule) dateLessons(stream, substream string, date time.Time) ([]models.Lesson, error) {

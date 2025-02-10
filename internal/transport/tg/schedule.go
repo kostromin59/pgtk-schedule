@@ -17,7 +17,6 @@ var (
 )
 
 type scheduleService interface {
-	Streams() []models.Stream
 	CurrentWeekLessons(stream, substream string) ([]models.Lesson, error)
 }
 
