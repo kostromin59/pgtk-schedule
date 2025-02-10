@@ -91,7 +91,6 @@ func (s *schedule) TomorrowLessons(stream, substream string) ([]models.Lesson, e
 
 func (s *schedule) CurrentWeekLessons(stream, substream string) ([]models.Lesson, error) {
 	return s.portal.CurrentWeekLessons(stream, substream)
-
 }
 
 // func (s *schedule) OnStreamLessonsChange(fn func(stream string, lessons []models.Lesson)) {
