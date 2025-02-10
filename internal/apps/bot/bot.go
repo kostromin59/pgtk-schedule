@@ -5,13 +5,15 @@ import (
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/repository"
 	"pgtk-schedule/internal/transport/tg"
+	"pgtk-schedule/pkg/database"
 
 	"gopkg.in/telebot.v4"
 )
 
 func Run(cfg configs.Bot) error {
+	// Bot
 	pref := telebot.Settings{
-		Token: cfg.TgBotToken,
+		Token: cfg.BotToken,
 		OnError: func(err error, ctx telebot.Context) {
 			log.Println(err.Error(), ctx.Sender().ID)
 			ctx.Reply("Что-то пошло не так!")
@@ -23,8 +25,16 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
-	studentRepo := repository.NewStudent(nil)
+	// Database
+	pool, err := database.NewPgx(cfg.DB_CONN)
+	if err != nil {
+		return err
+	}
 
+	// Repository
+	studentRepo := repository.NewStudent(pool)
+
+	// Handlers
 	studentHandlers := tg.NewStudent(studentRepo)
 
 	bot.Handle("/start", func(ctx telebot.Context) error {

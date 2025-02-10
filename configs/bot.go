@@ -1,7 +1,7 @@
 package configs
 
 type Bot struct {
-	TgBotToken string
-	AdminID    int64
-	DB_CONN    string
+	BotToken string `envconfig:"BOT_TOKEN" required:"true"`
+	AdminID  int64  `envconfig:"ADMIN_ID" required:"true"`
+	DB_CONN  string `envconfig:"DB_CONN" required:"true"`
 }
