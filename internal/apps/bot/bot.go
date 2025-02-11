@@ -34,10 +34,6 @@ func Run(cfg configs.Bot) error {
 
 	// Api
 	portal := portal.New()
-	err = portal.Update()
-	if err != nil {
-		return err
-	}
 
 	// Database
 	pool, err := database.NewPgx(cfg.DB_CONN)
@@ -50,9 +46,16 @@ func Run(cfg configs.Bot) error {
 
 	// Service
 	studentService := service.NewStudent(studentRepo)
+	scheduleService := service.NewSchedule(portal)
 
 	// Handlers
 	studentHandlers := tg.NewStudent(bot, studentService, portal)
+	scheduleHandlers := tg.NewSchedule(scheduleService)
+
+	err = scheduleService.Update()
+	if err != nil {
+		return err
+	}
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
 		return ctx.Reply("start command")
@@ -60,9 +63,7 @@ func Run(cfg configs.Bot) error {
 
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 
-	bot.Handle("Получить расписание на неделю", func(ctx telebot.Context) error {
-		return ctx.Reply("week lessons command")
-	}, studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle("Получить расписание на неделю", scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
 	bot.Start()
 

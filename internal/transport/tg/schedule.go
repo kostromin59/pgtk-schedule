@@ -24,8 +24,10 @@ type schedule struct {
 	service scheduleService
 }
 
-func NewSchedule() *schedule {
-	return &schedule{}
+func NewSchedule(service scheduleService) *schedule {
+	return &schedule{
+		service: service,
+	}
 }
 
 func (s *schedule) CurrentWeekLessons() telebot.HandlerFunc {
