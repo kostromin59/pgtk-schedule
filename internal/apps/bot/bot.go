@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"log"
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
@@ -53,10 +54,7 @@ func Run(cfg configs.Bot) error {
 	studentHandlers := tg.NewStudent(bot, studentService, portal)
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 
-	err = scheduleService.Update()
-	if err != nil {
-		return err
-	}
+	scheduleService.RunUpdater(context.Background(), 1*time.Hour)
 
 	err = bot.SetCommands([]telebot.Command{{
 		Text:        "/setstream",
