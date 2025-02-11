@@ -25,6 +25,7 @@ func Run(cfg configs.Bot) error {
 			Timeout:        10 * time.Second,
 			AllowedUpdates: []string{"message", "chat_member", "callback_query", "poll", "inline_query"},
 		},
+		ParseMode: telebot.ModeHTML,
 	}
 
 	bot, err := telebot.NewBot(pref)
@@ -60,10 +61,11 @@ func Run(cfg configs.Bot) error {
 	bot.Handle("/start", func(ctx telebot.Context) error {
 		return ctx.Reply("start command")
 	}, studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
-
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 
 	bot.Handle("Получить расписание на неделю", scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle("На сегодня", scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle("На завтра", scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
 	bot.Start()
 
