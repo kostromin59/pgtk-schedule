@@ -58,14 +58,29 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
+	err = bot.SetCommands([]telebot.Command{{
+		Text:        "/setstream",
+		Description: "Изменение группы и подгруппы",
+	}})
+	if err != nil {
+		return err
+	}
+
+	r := bot.NewMarkup()
+	weekButton := r.Text("Получить расписание на неделю")
+	todayButton := r.Text("На сегодня")
+	tomorrowButton := r.Text("На завтра")
+
+	r.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
+
 	bot.Handle("/start", func(ctx telebot.Context) error {
-		return ctx.Reply("start command")
-	}, studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.", r)
+	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 
-	bot.Handle("Получить расписание на неделю", scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
-	bot.Handle("На сегодня", scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
-	bot.Handle("На завтра", scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle(&tomorrowButton, scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
 	bot.Start()
 
