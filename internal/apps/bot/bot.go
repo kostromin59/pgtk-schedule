@@ -7,6 +7,7 @@ import (
 	"pgtk-schedule/internal/repository"
 	"pgtk-schedule/internal/transport/tg"
 	"pgtk-schedule/pkg/database"
+	"time"
 
 	"gopkg.in/telebot.v4"
 )
@@ -20,6 +21,7 @@ func Run(cfg configs.Bot) error {
 			ctx.Reply("Что-то пошло не так!")
 		},
 		Poller: &telebot.LongPoller{
+			Timeout:        10 * time.Second,
 			AllowedUpdates: []string{"message", "chat_member", "callback_query", "poll", "inline_query"},
 		},
 	}
@@ -52,9 +54,16 @@ func Run(cfg configs.Bot) error {
 		return ctx.Reply("start command")
 	}, studentHandlers.RegisteredStudent())
 
+	bot.Handle("/setstream", studentHandlers.SetStream())
+
 	bot.Handle("Получить расписание на неделю", func(ctx telebot.Context) error {
 		return ctx.Reply("week lessons command")
 	}, studentHandlers.RegisteredStudent())
+
+	// bot.Handle(telebot.OnCallback, func(ctx telebot.Context) error {
+	// 	// fmt.Println(ctx.Callback()., ctx.Callback().Unique)
+	// 	return nil
+	// })
 
 	bot.Start()
 
