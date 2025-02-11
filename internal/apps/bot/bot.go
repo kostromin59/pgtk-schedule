@@ -64,11 +64,6 @@ func Run(cfg configs.Bot) error {
 		return ctx.Reply("week lessons command")
 	}, studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
-	// bot.Handle(telebot.OnCallback, func(ctx telebot.Context) error {
-	// 	// fmt.Println(ctx.Callback()., ctx.Callback().Unique)
-	// 	return nil
-	// })
-
 	bot.Start()
 
 	return nil
