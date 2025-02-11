@@ -12,6 +12,8 @@ import (
 const (
 	actionSetStream    = "setStream"
 	actionSetSubstream = "setSubstream"
+
+	KeyStudent = "student"
 )
 
 type studentService interface {
@@ -57,6 +59,8 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 				return err
 			}
 
+			ctx.Set(KeyStudent, student)
+
 			if student.Stream != nil {
 				ctx.Set(KeyStream, *student.Stream)
 			}
@@ -73,12 +77,14 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 func (s *student) ValidateStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			student, err := s.service.FindByID(context.Background(), ctx.Sender().ID)
-			if err != nil {
-				return err
+			student := ctx.Get(KeyStudent)
+
+			modelStudent, ok := student.(models.Student)
+			if !ok {
+				return models.ErrStudentNotFound
 			}
 
-			err = s.service.Validate(student)
+			err := s.service.Validate(modelStudent)
 			if errors.Is(err, models.ErrStudentStreamMissed) {
 				return ctx.Reply("Укажите группу с помощью команды /setstream")
 			}
