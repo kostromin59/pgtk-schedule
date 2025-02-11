@@ -110,6 +110,7 @@ func (p *portal) Update() error {
 	p.streams = streams
 
 	wg = sync.WaitGroup{}
+	mu := sync.Mutex{}
 	lessons := make(map[string][]Lesson, len(streams))
 	for _, stream := range streams {
 		wg.Add(1)
@@ -121,7 +122,9 @@ func (p *portal) Update() error {
 				return
 			}
 
+			mu.Lock()
 			lessons[stream.Value] = l
+			mu.Unlock()
 		}()
 	}
 
