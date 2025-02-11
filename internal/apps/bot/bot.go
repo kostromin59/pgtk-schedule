@@ -52,13 +52,13 @@ func Run(cfg configs.Bot) error {
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
 		return ctx.Reply("start command")
-	}, studentHandlers.RegisteredStudent())
+	}, studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
-	bot.Handle("/setstream", studentHandlers.SetStream())
+	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 
 	bot.Handle("Получить расписание на неделю", func(ctx telebot.Context) error {
 		return ctx.Reply("week lessons command")
-	}, studentHandlers.RegisteredStudent())
+	}, studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
 	// bot.Handle(telebot.OnCallback, func(ctx telebot.Context) error {
 	// 	// fmt.Println(ctx.Callback()., ctx.Callback().Unique)

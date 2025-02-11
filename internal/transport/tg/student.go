@@ -43,42 +43,54 @@ func NewStudent(bot *telebot.Bot, repo studentRepository, portal portal) *studen
 func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			student, err := s.validateStudent(ctx)
-			if err == nil {
-				ctx.Set(KeyStream, *student.Stream)
+			student, err := s.findStudent(ctx)
+			if err != nil {
+				if errors.Is(err, models.ErrStudentNotFound) {
+					if err := s.registerStudent(ctx); err != nil {
+						return err
+					}
 
-				if student.Substream != nil {
-					ctx.Set(KeySubstream, *student.Substream)
+					return next(ctx)
 				}
 
-				return next(ctx)
+				return err
 			}
 
-			if errors.Is(err, models.ErrStreamIsUnknown) {
-				return ctx.Reply("Укажте группу с помощью команды /setstream")
+			// Set data
+			ctx.Set(KeyStream, *student.Stream)
+
+			if student.Substream != nil {
+				ctx.Set(KeySubstream, *student.Substream)
 			}
 
-			if errors.Is(err, models.ErrStudentNotFound) {
-				if err := s.registerStudent(ctx); err != nil {
-					return err
-				}
-			}
-
-			return err
+			return next(ctx)
 		}
 	}
 }
 
-func (s *student) validateStudent(ctx telebot.Context) (models.Student, error) {
+func (s *student) ValidateStudent() telebot.MiddlewareFunc {
+	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
+		return func(ctx telebot.Context) error {
+			student, err := s.findStudent(ctx)
+			if err != nil {
+				return err
+			}
+
+			if student.Stream == nil {
+				return ctx.Reply("Укажите группу с помощью команды /setstream")
+			}
+
+			return next(ctx)
+		}
+	}
+}
+
+func (s *student) findStudent(ctx telebot.Context) (models.Student, error) {
 	id := ctx.Sender().ID
 
 	student, err := s.repo.FindByID(context.Background(), id)
 	if err != nil {
 		return student, err
-	}
-
-	if student.Stream == nil {
-		return student, models.ErrStreamIsUnknown
 	}
 
 	return student, nil
