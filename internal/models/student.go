@@ -3,7 +3,8 @@ package models
 import "errors"
 
 var (
-	ErrStudentNotFound = errors.New("student not found")
+	ErrStudentNotFound     = errors.New("student not found")
+	ErrStudentStreamMissed = errors.New("student must contains stream")
 )
 
 type Student struct {

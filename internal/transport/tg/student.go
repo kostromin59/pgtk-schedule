@@ -14,7 +14,8 @@ const (
 	actionSetSubstream = "setSubstream"
 )
 
-type studentRepository interface {
+type studentService interface {
+	Validate(student models.Student) error
 	Create(ctx context.Context, id int64, nickname string) error
 	FindByID(ctx context.Context, id int64) (models.Student, error)
 	UpdateStream(ctx context.Context, id int64, stream string) error
@@ -27,26 +28,26 @@ type portal interface {
 }
 
 type student struct {
-	repo   studentRepository
-	portal portal
-	bot    *telebot.Bot
+	service studentService
+	portal  portal
+	bot     *telebot.Bot
 }
 
-func NewStudent(bot *telebot.Bot, repo studentRepository, portal portal) *student {
+func NewStudent(bot *telebot.Bot, service studentService, portal portal) *student {
 	return &student{
-		repo:   repo,
-		portal: portal,
-		bot:    bot,
+		service: service,
+		portal:  portal,
+		bot:     bot,
 	}
 }
 
 func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			student, err := s.findStudent(ctx)
+			student, err := s.service.FindByID(context.Background(), ctx.Sender().ID)
 			if err != nil {
 				if errors.Is(err, models.ErrStudentNotFound) {
-					if err := s.registerStudent(ctx); err != nil {
+					if err := s.service.Create(context.Background(), ctx.Sender().ID, ctx.Sender().Username); err != nil {
 						return err
 					}
 
@@ -56,8 +57,9 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 				return err
 			}
 
-			// Set data
-			ctx.Set(KeyStream, *student.Stream)
+			if student.Stream != nil {
+				ctx.Set(KeyStream, *student.Stream)
+			}
 
 			if student.Substream != nil {
 				ctx.Set(KeySubstream, *student.Substream)
@@ -71,36 +73,19 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 func (s *student) ValidateStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			student, err := s.findStudent(ctx)
+			student, err := s.service.FindByID(context.Background(), ctx.Sender().ID)
 			if err != nil {
 				return err
 			}
 
-			if student.Stream == nil {
+			err = s.service.Validate(student)
+			if errors.Is(err, models.ErrStudentStreamMissed) {
 				return ctx.Reply("Укажите группу с помощью команды /setstream")
 			}
 
 			return next(ctx)
 		}
 	}
-}
-
-func (s *student) findStudent(ctx telebot.Context) (models.Student, error) {
-	id := ctx.Sender().ID
-
-	student, err := s.repo.FindByID(context.Background(), id)
-	if err != nil {
-		return student, err
-	}
-
-	return student, nil
-}
-
-func (s *student) registerStudent(ctx telebot.Context) error {
-	id := ctx.Sender().ID
-	nickname := ctx.Sender().Username
-
-	return s.repo.Create(context.Background(), id, nickname)
 }
 
 func (s *student) SendMainKeyboard(ctx telebot.Context) error {
@@ -124,7 +109,7 @@ func (s *student) SetStream() telebot.HandlerFunc {
 			return models.ErrStreamIsUnknown
 		}
 
-		err := s.repo.UpdateStream(context.Background(), ctx.Callback().Sender.ID, stream)
+		err := s.service.UpdateStream(context.Background(), ctx.Callback().Sender.ID, stream)
 		if err != nil {
 			return err
 		}
@@ -135,7 +120,7 @@ func (s *student) SetStream() telebot.HandlerFunc {
 		}
 
 		if len(foundStream.Substreams) == 1 {
-			err := s.repo.UpdateSubstream(context.Background(), ctx.Callback().Sender.ID, foundStream.Substreams[0])
+			err := s.service.UpdateSubstream(context.Background(), ctx.Callback().Sender.ID, foundStream.Substreams[0])
 			if err != nil {
 				return err
 			}
@@ -159,7 +144,7 @@ func (s *student) SetStream() telebot.HandlerFunc {
 	s.bot.Handle("\f"+actionSetSubstream, func(ctx telebot.Context) error {
 		substream := ctx.Callback().Data
 
-		err := s.repo.UpdateSubstream(context.Background(), ctx.Callback().Sender.ID, substream)
+		err := s.service.UpdateSubstream(context.Background(), ctx.Callback().Sender.ID, substream)
 		if err != nil {
 			return err
 		}

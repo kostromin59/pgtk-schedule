@@ -5,6 +5,7 @@ import (
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
 	"pgtk-schedule/internal/repository"
+	"pgtk-schedule/internal/service"
 	"pgtk-schedule/internal/transport/tg"
 	"pgtk-schedule/pkg/database"
 	"time"
@@ -47,8 +48,11 @@ func Run(cfg configs.Bot) error {
 	// Repository
 	studentRepo := repository.NewStudent(pool)
 
+	// Service
+	studentService := service.NewStudent(studentRepo)
+
 	// Handlers
-	studentHandlers := tg.NewStudent(bot, studentRepo, portal)
+	studentHandlers := tg.NewStudent(bot, studentService, portal)
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
 		return ctx.Reply("start command")
