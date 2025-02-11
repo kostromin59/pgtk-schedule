@@ -77,6 +77,9 @@ func Run(cfg configs.Bot) error {
 		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.", r)
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
+	bot.Handle("/send", func(ctx telebot.Context) error {
+		return nil
+	})
 
 	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
