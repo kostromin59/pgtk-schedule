@@ -68,6 +68,7 @@ func Run(cfg configs.Bot) error {
 	weekButton := r.Text("Получить расписание на неделю")
 	todayButton := r.Text("На сегодня")
 	tomorrowButton := r.Text("На завтра")
+	r.ResizeKeyboard = true
 
 	r.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
 
