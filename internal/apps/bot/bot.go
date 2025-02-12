@@ -148,6 +148,15 @@ func Run(cfg configs.Bot) error {
 				substream = *student.Substream
 			}
 
+			weekLessons, err := scheduleService.CurrentWeekLessons(*student.Stream, substream)
+			if err != nil {
+				return err
+			}
+
+			if len(weekLessons) == 0 {
+				return nil
+			}
+
 			lessons, err := scheduleService.TodayLessons(*student.Stream, substream)
 			if err != nil {
 				return err
@@ -179,10 +188,11 @@ func Run(cfg configs.Bot) error {
 				return err
 			}
 
-			msg := "Сегодня нет пар! Хорошего дня!"
-			if len(lessons) != 0 {
-				msg = fmt.Sprintf("<b>У тебя сегодня %d пар:</b>\n", len(lessons)) + scheduleService.LessonsToString(lessons)
+			if len(lessons) == 0 {
+				return nil
 			}
+
+			msg := fmt.Sprintf("<b>У тебя завтра %d пар:</b>\n", len(lessons)) + scheduleService.LessonsToString(lessons)
 
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
 			return err
