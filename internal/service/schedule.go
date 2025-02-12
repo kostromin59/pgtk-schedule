@@ -51,11 +51,9 @@ func NewSchedule(portal schedulePortal) *schedule {
 func (s *schedule) Update() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := s.portal.Update(); err != nil {
-		return err
-	}
 
-	return nil
+	err := s.portal.Update()
+	return err
 }
 
 func (s *schedule) dateLessons(stream, substream string, date time.Time) ([]models.Lesson, error) {
