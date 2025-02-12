@@ -55,7 +55,6 @@ func (s *schedule) CurrentWeekLessons() telebot.HandlerFunc {
 			return err
 		}
 
-		// TODO: Rate limiter + formatting
 		return ctx.Send(s.service.LessonsToString(lessons))
 	}
 }
