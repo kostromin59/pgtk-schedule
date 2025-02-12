@@ -60,8 +60,6 @@ func Run(cfg configs.Bot) error {
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
 
-	scheduleService.RunUpdater(context.Background(), 1*time.Hour)
-
 	err = bot.SetCommands([]telebot.Command{
 		{
 			Text:        "/setstream",

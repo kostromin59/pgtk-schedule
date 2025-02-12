@@ -1,12 +1,11 @@
 package service
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"pgtk-schedule/internal/models"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 )
@@ -40,6 +39,7 @@ type schedulePortal interface {
 
 type schedule struct {
 	portal schedulePortal
+	mu     sync.RWMutex
 }
 
 func NewSchedule(portal schedulePortal) *schedule {
@@ -49,31 +49,13 @@ func NewSchedule(portal schedulePortal) *schedule {
 }
 
 func (s *schedule) Update() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if err := s.portal.Update(); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
-	go func() {
-		if err := s.portal.Update(); err != nil {
-			log.Printf("error while updating portal: %s", err.Error())
-		}
-
-		ticker := time.NewTicker(d)
-		for {
-			select {
-			case <-ticker.C:
-				if err := s.portal.Update(); err != nil {
-					log.Printf("error while updating portal: %s", err.Error())
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
 }
 
 func (s *schedule) dateLessons(stream, substream string, date time.Time) ([]models.Lesson, error) {
@@ -106,6 +88,9 @@ func (s *schedule) TomorrowLessons(stream, substream string) ([]models.Lesson, e
 }
 
 func (s *schedule) CurrentWeekLessons(stream, substream string) ([]models.Lesson, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	lessons, err := s.portal.CurrentWeekLessons(stream, substream)
 	if err != nil {
 		return nil, err
