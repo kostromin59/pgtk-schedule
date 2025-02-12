@@ -61,8 +61,6 @@ func (t *teacher) Find() telebot.HandlerFunc {
 
 		r := t.bot.NewMarkup()
 
-		fmt.Println(teachers)
-
 		btns := make([]telebot.Row, 0, len(teachers))
 		for _, teacher := range teachers {
 			if teacher == "" {
@@ -75,7 +73,7 @@ func (t *teacher) Find() telebot.HandlerFunc {
 				data += " "
 				data += splitted[1]
 			}
-			fmt.Println(data)
+
 			b := r.Data(teacher, actionFindTeacher, data)
 			btns = append(btns, r.Row(b))
 		}

@@ -53,7 +53,6 @@ func (*portal) Timezone() string {
 func (p *portal) Update() error {
 	res, err := request.New(scheduleUrl).Do()
 	if err != nil {
-		fmt.Println(res.StatusCode())
 		return err
 	}
 
