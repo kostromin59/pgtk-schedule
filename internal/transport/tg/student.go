@@ -94,10 +94,6 @@ func (s *student) ValidateStudent() telebot.MiddlewareFunc {
 	}
 }
 
-func (s *student) SendMainKeyboard(ctx telebot.Context) error {
-	return ctx.Reply("main keyboard - TODO!")
-}
-
 func (s *student) SetStream() telebot.HandlerFunc {
 	s.bot.Handle("\f"+actionSetStream, func(ctx telebot.Context) error {
 		stream := ctx.Callback().Data
