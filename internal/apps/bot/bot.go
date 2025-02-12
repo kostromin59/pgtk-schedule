@@ -146,7 +146,33 @@ func Run(cfg configs.Bot) error {
 				substream = *student.Substream
 			}
 
-			lessons, err := scheduleService.CurrentWeekLessons(*student.Stream, substream)
+			lessons, err := scheduleService.TodayLessons(*student.Stream, substream)
+			if err != nil {
+				return err
+			}
+
+			msg := "Сегодня нет пар! Хорошего дня!"
+			if len(lessons) != 0 {
+				msg = fmt.Sprintf("<b>У тебя сегодня %d пар:</b>\n", len(lessons)) + scheduleService.LessonsToString(lessons)
+			}
+
+			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
+			return err
+		})
+	}))
+
+	s.NewJob(gocron.CronJob("0 18 * * 1-6", false), gocron.NewTask(func() {
+		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
+			if err := studentService.Validate(student); err != nil {
+				return err
+			}
+
+			substream := ""
+			if student.Substream != nil {
+				substream = *student.Substream
+			}
+
+			lessons, err := scheduleService.TomorrowLessons(*student.Stream, substream)
 			if err != nil {
 				return err
 			}
