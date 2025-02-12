@@ -27,7 +27,7 @@ func Run(cfg configs.Bot) error {
 			ctx.Reply("Что-то пошло не так!")
 		},
 		Poller: &telebot.LongPoller{
-			Timeout:        10 * time.Second,
+			Timeout:        3 * time.Second,
 			AllowedUpdates: []string{"message", "chat_member", "callback_query", "poll", "inline_query"},
 		},
 		ParseMode: telebot.ModeHTML,
