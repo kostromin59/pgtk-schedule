@@ -86,6 +86,8 @@ func (t *teacher) Find(teacher string) (models.Lesson, error) {
 
 	streams := t.portal.Streams()
 
+	var nearestLesson models.Lesson
+
 	for _, stream := range streams {
 		if len(stream.Substreams) == 0 {
 			lessons, err := t.scheduleService.TodayLessons(stream.ID, "")
@@ -94,8 +96,22 @@ func (t *teacher) Find(teacher string) (models.Lesson, error) {
 			}
 
 			for _, lesson := range lessons {
-				if now.Before(lesson.DateEnd) && strings.Contains(lesson.Teacher, teacher) {
-					return lesson, nil
+				if !strings.Contains(lesson.Teacher, teacher) {
+					continue
+				}
+
+				if now.After(lesson.DateEnd) {
+					continue
+				}
+
+				if nearestLesson.ID == "" {
+					nearestLesson = lesson
+					continue
+				}
+
+				if lesson.DateEnd.Before(nearestLesson.DateEnd) {
+					nearestLesson = lesson
+					continue
 				}
 			}
 		}
@@ -107,12 +123,30 @@ func (t *teacher) Find(teacher string) (models.Lesson, error) {
 			}
 
 			for _, lesson := range lessons {
-				if now.Before(lesson.DateEnd) && strings.Contains(lesson.Teacher, teacher) {
-					return lesson, nil
+				if !strings.Contains(lesson.Teacher, teacher) {
+					continue
+				}
+
+				if now.After(lesson.DateEnd) {
+					continue
+				}
+
+				if nearestLesson.ID == "" {
+					nearestLesson = lesson
+					continue
+				}
+
+				if lesson.DateEnd.Before(nearestLesson.DateEnd) {
+					nearestLesson = lesson
+					continue
 				}
 			}
 		}
 	}
 
-	return models.Lesson{}, models.ErrLessonNotFound
+	if nearestLesson.ID == "" {
+		return models.Lesson{}, models.ErrLessonNotFound
+	}
+
+	return nearestLesson, nil
 }

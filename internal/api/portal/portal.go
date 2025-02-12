@@ -138,6 +138,11 @@ func (p *portal) Update() error {
 }
 
 func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, error) {
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		return nil, err
+	}
+
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
@@ -176,7 +181,7 @@ func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, 
 			parsedStartTime.Hour(),
 			parsedStartTime.Minute(),
 			0, 0,
-			lesson.DateStart.Location(),
+			loc,
 		)
 
 		combinedEndDateTime := time.Date(
@@ -186,7 +191,7 @@ func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, 
 			parsedEndTime.Hour(),
 			parsedEndTime.Minute(),
 			0, 0,
-			lesson.DateEnd.Location(),
+			loc,
 		)
 
 		lessons = append(lessons, models.Lesson{
