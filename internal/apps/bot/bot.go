@@ -137,7 +137,7 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
-	s.NewJob(gocron.CronJob("0 5 * * 1-6", false), gocron.NewTask(func() {
+	s.NewJob(gocron.CronJob("TZ=Asia/Yakaterinburg 0 5 * * 1-6", false), gocron.NewTask(func() {
 		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
 			if err := studentService.Validate(student); err != nil {
 				return err
@@ -172,7 +172,7 @@ func Run(cfg configs.Bot) error {
 		})
 	}))
 
-	s.NewJob(gocron.CronJob("0 18 * * 1-6", false), gocron.NewTask(func() {
+	s.NewJob(gocron.CronJob("TZ=Asia/Yakaterinburg 0 18 * * 1-6", false), gocron.NewTask(func() {
 		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
 			if err := studentService.Validate(student); err != nil {
 				return err
@@ -199,7 +199,7 @@ func Run(cfg configs.Bot) error {
 		})
 	}))
 
-	s.NewJob(gocron.CronJob("0 12 * * 0", false), gocron.NewTask(func() {
+	s.NewJob(gocron.CronJob("TZ=Asia/Yakaterinburg 0 12 * * 0", false), gocron.NewTask(func() {
 		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
 			if err := studentService.Validate(student); err != nil {
 				return err
