@@ -60,6 +60,10 @@ func Run(cfg configs.Bot) error {
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
 
+	if err := scheduleService.Update(); err != nil {
+		return err
+	}
+
 	err = bot.SetCommands([]telebot.Command{
 		{
 			Text:        "/setstream",
@@ -210,6 +214,12 @@ func Run(cfg configs.Bot) error {
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
 			return err
 		})
+	}))
+
+	s.NewJob(gocron.CronJob("0 * * * *", false), gocron.NewTask(func() {
+		if err := scheduleService.Update(); err != nil {
+			log.Println(err.Error())
+		}
 	}))
 
 	s.Start()
