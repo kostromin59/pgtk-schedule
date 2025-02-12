@@ -99,6 +99,7 @@ func Run(cfg configs.Bot) error {
 
 	// TODO: move to handlers
 	// TODO: take message from args
+	// TODO: add admin validation
 	bot.Handle("/send", func(ctx telebot.Context) error {
 		var lastId int64 = math.MinInt64
 		for {
