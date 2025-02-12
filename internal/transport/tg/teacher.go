@@ -45,7 +45,7 @@ func (t *teacher) Find() telebot.HandlerFunc {
 			return err
 		}
 
-		msg := fmt.Sprintf("<b>Ближайшая пара на сегодня у преподавателя %s:</b>\nПара: %s\nКабинет: %s\nВремя: %s-%s", lesson.Teacher, lesson.Name, lesson.Cabinet, lesson.DateStart.Format("15:04"), lesson.DateEnd.Format("15:04"))
+		msg := fmt.Sprintf("<b>Ближайшая пара на сегодня у преподавателя %s:</b>\nПара: %s (%s)\nВремя: %s-%s\nКабинет: %s", lesson.Teacher, lesson.Name, lesson.Type, lesson.DateStart.Format("15:04"), lesson.DateEnd.Format("15:04"), lesson.Cabinet)
 
 		_, err = t.bot.Edit(ctx.Callback().Message, msg)
 		return err
@@ -55,6 +55,10 @@ func (t *teacher) Find() telebot.HandlerFunc {
 		teachers, err := t.teacherService.TodayList()
 		if err != nil {
 			return err
+		}
+
+		if len(teachers) == 0 {
+			return ctx.Reply("Либо расписание ещё не загрузилось, либо сегодня нет пар :)")
 		}
 
 		slices.Sort(teachers)
