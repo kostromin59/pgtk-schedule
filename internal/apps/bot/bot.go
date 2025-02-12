@@ -2,15 +2,19 @@ package bot
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math"
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
+	"pgtk-schedule/internal/models"
 	"pgtk-schedule/internal/repository"
 	"pgtk-schedule/internal/service"
 	"pgtk-schedule/internal/transport/tg"
 	"pgtk-schedule/pkg/database"
 	"time"
 
+	"github.com/go-co-op/gocron/v2"
 	"gopkg.in/telebot.v4"
 )
 
@@ -92,13 +96,99 @@ func Run(cfg configs.Bot) error {
 	bot.Handle("/feedback", func(ctx telebot.Context) error {
 		return ctx.Reply("Напишите @kostromin59, чтобы сообщить о проблеме, предложить новый функционал или договориться о дальнейшей поддержке бота")
 	})
+
+	// TODO: move to handlers
+	// TODO: take message from args
 	bot.Handle("/send", func(ctx telebot.Context) error {
-		return nil
+		var lastId int64 = math.MinInt64
+		for {
+			students, currentLastId, err := studentService.FindAll(context.Background(), lastId, 25)
+			if err != nil {
+				log.Println(err.Error())
+				ctx.Reply(fmt.Sprintf("Ошибка в сервисе: %s", err.Error()))
+				return err
+			}
+
+			if currentLastId == lastId {
+				return nil
+			}
+
+			lastId = currentLastId
+
+			for _, student := range students {
+				_, err := bot.Send(&telebot.User{ID: student.ID}, "test")
+				if err != nil {
+					log.Println(err.Error())
+				}
+				time.Sleep(300 * time.Millisecond)
+			}
+		}
 	})
 
 	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&tomorrowButton, scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		return err
+	}
+
+	s.NewJob(gocron.CronJob("0 5 * * 1-6", false), gocron.NewTask(func() {
+		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
+			if err := studentService.Validate(student); err != nil {
+				return err
+			}
+
+			substream := ""
+			if student.Substream != nil {
+				substream = *student.Substream
+			}
+
+			lessons, err := scheduleService.CurrentWeekLessons(*student.Stream, substream)
+			if err != nil {
+				return err
+			}
+
+			msg := "Сегодня нет пар! Хорошего дня!"
+			if len(lessons) != 0 {
+				msg = fmt.Sprintf("<b>У тебя сегодня %d пар:</b>\n", len(lessons)) + scheduleService.LessonsToString(lessons)
+			}
+
+			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
+			return err
+		})
+	}))
+
+	s.NewJob(gocron.CronJob("0 12 * * 0", false), gocron.NewTask(func() {
+		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
+			if err := studentService.Validate(student); err != nil {
+				return err
+			}
+
+			substream := ""
+			if student.Substream != nil {
+				substream = *student.Substream
+			}
+
+			lessons, err := scheduleService.CurrentWeekLessons(*student.Stream, substream)
+			if err != nil {
+				return err
+			}
+
+			if len(lessons) == 0 {
+				return nil
+			}
+
+			msg := "<b>Пары на следующую неделю:</b>\n" + scheduleService.LessonsToString(lessons)
+
+			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
+			return err
+		})
+	}))
+
+	s.Start()
+	defer s.Shutdown()
 
 	bot.Start()
 
