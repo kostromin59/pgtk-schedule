@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrLessonsAreEmpty = errors.New("lessons are empty")
+	ErrLessonNotFound  = errors.New("lesson not found")
 )
 
 type Lesson struct {

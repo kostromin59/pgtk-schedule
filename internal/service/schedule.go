@@ -4,25 +4,22 @@ import (
 	"context"
 	"log"
 	"pgtk-schedule/internal/models"
+	"slices"
 	"time"
 )
 
-type portal interface {
+type schedulePortal interface {
 	Update() error
 	CurrentWeekLessons(stream, substream string) ([]models.Lesson, error)
 }
 
 type schedule struct {
-	portal portal
-
-	onStreamLessonsChange func(stream string, lessons []models.Lesson)
-	previousLessons       map[string]models.Lesson
+	portal schedulePortal
 }
 
-func NewSchedule(portal portal) *schedule {
+func NewSchedule(portal schedulePortal) *schedule {
 	return &schedule{
-		portal:          portal,
-		previousLessons: make(map[string]models.Lesson),
+		portal: portal,
 	}
 }
 
@@ -31,7 +28,6 @@ func (s *schedule) Update() error {
 		return err
 	}
 
-	// TODO: check changes
 	return nil
 }
 
@@ -56,7 +52,7 @@ func (s *schedule) RunUpdater(ctx context.Context, d time.Duration) {
 }
 
 func (s *schedule) dateLessons(stream, substream string, date time.Time) ([]models.Lesson, error) {
-	l, err := s.portal.CurrentWeekLessons(stream, substream)
+	l, err := s.CurrentWeekLessons(stream, substream)
 	if err != nil {
 		return nil, err
 	}
@@ -85,9 +81,20 @@ func (s *schedule) TomorrowLessons(stream, substream string) ([]models.Lesson, e
 }
 
 func (s *schedule) CurrentWeekLessons(stream, substream string) ([]models.Lesson, error) {
-	return s.portal.CurrentWeekLessons(stream, substream)
-}
+	lessons, err := s.portal.CurrentWeekLessons(stream, substream)
+	if err != nil {
+		return nil, err
+	}
 
-// func (s *schedule) OnStreamLessonsChange(fn func(stream string, lessons []models.Lesson)) {
-// 	s.onStreamLessonsChange = fn
-// }
+	slices.SortFunc(lessons, func(a, b models.Lesson) int {
+		if a.DateStart.Before(b.DateStart) {
+			return -1
+		} else if a.DateStart.After(b.DateStart) {
+			return 1
+		}
+
+		return 0
+	})
+
+	return lessons, nil
+}

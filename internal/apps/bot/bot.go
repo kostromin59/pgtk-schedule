@@ -49,17 +49,25 @@ func Run(cfg configs.Bot) error {
 	// Service
 	studentService := service.NewStudent(studentRepo)
 	scheduleService := service.NewSchedule(portal)
+	teacherService := service.NewTeacher(portal, scheduleService)
 
 	// Handlers
 	studentHandlers := tg.NewStudent(bot, studentService, portal)
 	scheduleHandlers := tg.NewSchedule(scheduleService)
+	teacherHandlers := tg.NewTeacher(bot, teacherService)
 
 	scheduleService.RunUpdater(context.Background(), 1*time.Hour)
 
-	err = bot.SetCommands([]telebot.Command{{
-		Text:        "/setstream",
-		Description: "Изменение группы и подгруппы",
-	}})
+	err = bot.SetCommands([]telebot.Command{
+		{
+			Text:        "/setstream",
+			Description: "Изменение группы и подгруппы",
+		},
+		{
+			Text:        "/findteacher",
+			Description: "Найти преподавателя",
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -76,6 +84,7 @@ func Run(cfg configs.Bot) error {
 		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.", r)
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
+	bot.Handle("/findteacher", teacherHandlers.Find())
 	bot.Handle("/send", func(ctx telebot.Context) error {
 		return nil
 	})

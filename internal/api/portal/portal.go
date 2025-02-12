@@ -46,6 +46,10 @@ func New() *portal {
 	return &portal{}
 }
 
+func (*portal) Timezone() string {
+	return timezone
+}
+
 func (p *portal) Update() error {
 	res, err := request.New(scheduleUrl).Do()
 	if err != nil {
@@ -221,7 +225,7 @@ func (p *portal) Streams() []models.Stream {
 func (p *portal) currentWeek(weeks []Week) (Week, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		return Week{}, fmt.Errorf("unable to load timezone: %w", err)
+		return Week{}, err
 	}
 
 	now := time.Now().In(loc)
