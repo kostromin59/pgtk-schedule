@@ -67,6 +67,10 @@ func Run(cfg configs.Bot) error {
 			Text:        "/findteacher",
 			Description: "Найти преподавателя",
 		},
+		{
+			Text:        "/feedback",
+			Description: "Найти преподавателя",
+		},
 	})
 	if err != nil {
 		return err
@@ -81,10 +85,13 @@ func Run(cfg configs.Bot) error {
 	r.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
-		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.", r)
+		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.\n\nИспользуйте команду /feedback для обратной связи.", r)
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 	bot.Handle("/findteacher", teacherHandlers.Find())
+	bot.Handle("/feedback", func(ctx telebot.Context) error {
+		return ctx.Reply("Напишите @kostromin59, чтобы сообщить о проблеме, предложить новый функционал или договориться о дальнейшей поддержке бота")
+	})
 	bot.Handle("/send", func(ctx telebot.Context) error {
 		return nil
 	})
