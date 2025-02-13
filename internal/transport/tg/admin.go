@@ -1,8 +1,8 @@
 package tg
 
 import (
-	"log"
 	"pgtk-schedule/internal/models"
+	"strings"
 	"time"
 
 	"gopkg.in/telebot.v4"
@@ -26,16 +26,14 @@ func NewAdmin(bot *telebot.Bot, studentService adminStudentService, adminId int6
 	}
 }
 
-// TODO: take message from args
 func (a *admin) Send() telebot.HandlerFunc {
 	return func(ctx telebot.Context) error {
+		msg := strings.Join(ctx.Args(), " ")
+
 		a.studentService.ForEach(func(student models.Student) error {
-			defer time.Sleep(300 * time.Second)
-			_, err := a.bot.Send(&telebot.User{ID: student.ID}, "test")
-			if err != nil {
-				log.Println(err.Error())
-			}
-			return nil
+			defer time.Sleep(300 * time.Millisecond)
+			_, err := a.bot.Send(&telebot.User{ID: student.ID}, msg)
+			return err
 		})
 
 		return nil
