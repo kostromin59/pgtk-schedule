@@ -56,7 +56,7 @@ func Run(cfg configs.Bot) error {
 	studentHandlers := tg.NewStudent(bot, studentService, portal)
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
-	adminHandlers := tg.NewAdmin(cfg.AdminID)
+	adminHandlers := tg.NewAdmin(bot, studentService, cfg.AdminID)
 
 	if err := scheduleService.Update(); err != nil {
 		return err
@@ -96,20 +96,7 @@ func Run(cfg configs.Bot) error {
 		return ctx.Reply("Напишите @kostromin59, чтобы сообщить о проблеме, предложить новый функционал или договориться о дальнейшей поддержке бота")
 	})
 
-	// TODO: move to handlers
-	// TODO: take message from args
-	bot.Handle("/send", func(ctx telebot.Context) error {
-		studentService.ForEach(func(student models.Student) error {
-			defer time.Sleep(300 * time.Second)
-			_, err := bot.Send(&telebot.User{ID: student.ID}, "test")
-			if err != nil {
-				log.Println(err.Error())
-			}
-			return nil
-		})
-
-		return nil
-	}, adminHandlers.ValidateAdmin())
+	bot.Handle("/send", adminHandlers.Send(), adminHandlers.ValidateAdmin())
 
 	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())

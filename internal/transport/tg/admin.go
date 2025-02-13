@@ -1,14 +1,44 @@
 package tg
 
-import "gopkg.in/telebot.v4"
+import (
+	"log"
+	"pgtk-schedule/internal/models"
+	"time"
 
-type admin struct {
-	adminId int64
+	"gopkg.in/telebot.v4"
+)
+
+type adminStudentService interface {
+	ForEach(func(models.Student) error)
 }
 
-func NewAdmin(adminId int64) *admin {
+type admin struct {
+	bot            *telebot.Bot
+	studentService adminStudentService
+	adminId        int64
+}
+
+func NewAdmin(bot *telebot.Bot, studentService adminStudentService, adminId int64) *admin {
 	return &admin{
-		adminId: adminId,
+		bot:            bot,
+		studentService: studentService,
+		adminId:        adminId,
+	}
+}
+
+// TODO: take message from args
+func (a *admin) Send() telebot.HandlerFunc {
+	return func(ctx telebot.Context) error {
+		a.studentService.ForEach(func(student models.Student) error {
+			defer time.Sleep(300 * time.Second)
+			_, err := a.bot.Send(&telebot.User{ID: student.ID}, "test")
+			if err != nil {
+				log.Println(err.Error())
+			}
+			return nil
+		})
+
+		return nil
 	}
 }
 
