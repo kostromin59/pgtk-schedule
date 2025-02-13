@@ -59,6 +59,7 @@ func Run(cfg configs.Bot) error {
 	studentHandlers := tg.NewStudent(bot, studentService, portal)
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
+	adminHandlers := tg.NewAdmin(cfg.AdminID)
 
 	if err := scheduleService.Update(); err != nil {
 		return err
@@ -101,7 +102,6 @@ func Run(cfg configs.Bot) error {
 
 	// TODO: move to handlers
 	// TODO: take message from args
-	// TODO: add admin validation
 	bot.Handle("/send", func(ctx telebot.Context) error {
 		var lastId int64 = math.MinInt64
 		for {
@@ -126,7 +126,7 @@ func Run(cfg configs.Bot) error {
 				time.Sleep(300 * time.Millisecond)
 			}
 		}
-	})
+	}, adminHandlers.ValidateAdmin())
 
 	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
