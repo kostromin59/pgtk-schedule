@@ -76,7 +76,7 @@ func (s *schedule) TodayLessons() telebot.HandlerFunc {
 
 		lessons, err := s.service.TodayLessons(stream, substream)
 		if err != nil {
-			if errors.Is(err, models.ErrLessonNotFound) {
+			if errors.Is(err, models.ErrLessonsAreEmpty) {
 				return ctx.Reply("Расписание не найдено! Попробуйте ещё раз через пару минут.")
 			}
 			return err
