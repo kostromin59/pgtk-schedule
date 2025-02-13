@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"fmt"
 	"log"
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
@@ -86,7 +85,6 @@ func Run(cfg configs.Bot) error {
 	todayButton := r.Text("На сегодня")
 	tomorrowButton := r.Text("На завтра")
 	r.ResizeKeyboard = true
-
 	r.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
@@ -117,6 +115,7 @@ func Run(cfg configs.Bot) error {
 	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&tomorrowButton, scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 
+	// Cron jobs
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		return err
@@ -150,7 +149,7 @@ func Run(cfg configs.Bot) error {
 
 			msg := "Сегодня нет пар! Хорошего дня!"
 			if len(lessons) != 0 {
-				msg = fmt.Sprintf("<b>У тебя сегодня %d пар:</b>\n", len(lessons)) + scheduleService.LessonsToString(lessons)
+				msg = "<b>Присылаю пары на сегодня. Расписание может измениться, не забывай проверять расписание!:</b>\n" + scheduleService.LessonsToString(lessons)
 			}
 
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
@@ -158,7 +157,7 @@ func Run(cfg configs.Bot) error {
 		})
 	}))
 
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 19 * * 1-6", false), gocron.NewTask(func() {
+	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 18 * * 1-6", false), gocron.NewTask(func() {
 		studentService.ForEach(func(student models.Student) error {
 			defer time.Sleep(300 * time.Millisecond)
 			if err := studentService.Validate(student); err != nil {
@@ -179,7 +178,7 @@ func Run(cfg configs.Bot) error {
 				return nil
 			}
 
-			msg := fmt.Sprintf("<b>У тебя завтра %d пар:</b>\n", len(lessons)) + scheduleService.LessonsToString(lessons)
+			msg := "<b>Присылаю пары на завтра. Расписание может измениться, не забывай проверять расписание!</b>\n" + scheduleService.LessonsToString(lessons)
 
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
 			return err
@@ -218,6 +217,7 @@ func Run(cfg configs.Bot) error {
 		if err := scheduleService.Update(); err != nil {
 			log.Println(err.Error())
 		}
+		log.Println("schedule has been updated!")
 	}))
 
 	s.Start()
