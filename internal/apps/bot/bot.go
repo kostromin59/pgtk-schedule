@@ -21,7 +21,7 @@ func Run(cfg configs.Bot) error {
 		Token: cfg.BotToken,
 		OnError: func(err error, ctx telebot.Context) {
 			log.Println(err.Error(), ctx.Sender().ID)
-			ctx.Reply("Что-то пошло не так!")
+			ctx.Reply("Что-то пошло не так! Напишите @kostromin59 о проблеме.")
 		},
 		Poller: &telebot.LongPoller{
 			Timeout:        3 * time.Second,
