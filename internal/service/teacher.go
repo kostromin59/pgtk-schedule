@@ -40,20 +40,12 @@ func (t *teacher) TodayList() ([]string, error) {
 	teacherSet := make(map[string]struct{}, 0)
 
 	for _, stream := range streams {
+		substreams := stream.Substreams
 		if len(stream.Substreams) == 0 {
-			lessons, err := t.scheduleService.TodayLessons(stream.ID, "")
-			if err != nil {
-				return nil, err
-			}
-
-			for _, lesson := range lessons {
-				if now.Before(lesson.DateEnd) {
-					teacherSet[lesson.Teacher] = struct{}{}
-				}
-			}
+			substreams = []string{""}
 		}
 
-		for _, substream := range stream.Substreams {
+		for _, substream := range substreams {
 			lessons, err := t.scheduleService.TodayLessons(stream.ID, substream)
 			if err != nil {
 				return nil, err
@@ -89,34 +81,12 @@ func (t *teacher) Find(teacher string) (models.Lesson, error) {
 	var nearestLesson models.Lesson
 
 	for _, stream := range streams {
+		substreams := stream.Substreams
 		if len(stream.Substreams) == 0 {
-			lessons, err := t.scheduleService.TodayLessons(stream.ID, "")
-			if err != nil {
-				return models.Lesson{}, err
-			}
-
-			for _, lesson := range lessons {
-				if !strings.Contains(lesson.Teacher, teacher) {
-					continue
-				}
-
-				if now.After(lesson.DateEnd) {
-					continue
-				}
-
-				if nearestLesson.ID == "" {
-					nearestLesson = lesson
-					continue
-				}
-
-				if lesson.DateEnd.Before(nearestLesson.DateEnd) {
-					nearestLesson = lesson
-					continue
-				}
-			}
+			substreams = []string{""}
 		}
 
-		for _, substream := range stream.Substreams {
+		for _, substream := range substreams {
 			lessons, err := t.scheduleService.TodayLessons(stream.ID, substream)
 			if err != nil {
 				return models.Lesson{}, err
