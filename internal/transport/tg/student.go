@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"math"
 	"pgtk-schedule/internal/models"
-	"time"
 
 	"gopkg.in/telebot.v4"
 )
@@ -26,7 +23,6 @@ type studentService interface {
 	UpdateStream(ctx context.Context, id int64, stream string) error
 	UpdateSubstream(ctx context.Context, id int64, substream string) error
 	UpdateNickname(ctx context.Context, id int64, nickname string) error
-	FindAll(ctx context.Context, id int64, limit int) ([]models.Student, int64, error)
 }
 
 type portal interface {
@@ -176,32 +172,5 @@ func (s *student) SetStream() telebot.HandlerFunc {
 		r.Inline(btns...)
 
 		return ctx.Reply("Выберите группу:", r)
-	}
-}
-
-func (s *student) ForEachStudent(fn func(bot *telebot.Bot, student models.Student) error) {
-	const limit = 25
-	var lastId int64 = math.MinInt64
-
-	for {
-		students, currentLastId, err := s.service.FindAll(context.Background(), lastId, limit)
-		if err != nil {
-			log.Println(err.Error())
-			return
-		}
-
-		if currentLastId == lastId {
-			return
-		}
-
-		lastId = currentLastId
-
-		for _, student := range students {
-			err := fn(s.bot, student)
-			if err != nil {
-				log.Println(err.Error())
-			}
-			time.Sleep(300 * time.Millisecond)
-		}
 	}
 }

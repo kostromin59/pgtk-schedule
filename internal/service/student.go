@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"log"
+	"math"
 	"pgtk-schedule/internal/models"
 )
 
@@ -56,6 +58,28 @@ func (s *student) UpdateNickname(ctx context.Context, id int64, nickname string)
 	return s.repo.UpdateNickname(ctx, id, nickname)
 }
 
-func (s *student) FindAll(ctx context.Context, id int64, limit int) ([]models.Student, int64, error) {
-	return s.repo.FindAll(ctx, id, limit)
+func (s *student) ForEach(fn func(student models.Student) error) {
+	const limit = 25
+	var lastId int64 = math.MinInt64
+
+	for {
+		students, currentLastId, err := s.repo.FindAll(context.Background(), lastId, limit)
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
+
+		if currentLastId == lastId {
+			return
+		}
+
+		lastId = currentLastId
+
+		for _, student := range students {
+			err := fn(student)
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
+	}
 }

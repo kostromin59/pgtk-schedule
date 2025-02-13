@@ -1,10 +1,8 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"math"
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
 	"pgtk-schedule/internal/models"
@@ -103,29 +101,16 @@ func Run(cfg configs.Bot) error {
 	// TODO: move to handlers
 	// TODO: take message from args
 	bot.Handle("/send", func(ctx telebot.Context) error {
-		var lastId int64 = math.MinInt64
-		for {
-			students, currentLastId, err := studentService.FindAll(context.Background(), lastId, 25)
+		studentService.ForEach(func(student models.Student) error {
+			defer time.Sleep(300 * time.Second)
+			_, err := bot.Send(&telebot.User{ID: student.ID}, "test")
 			if err != nil {
 				log.Println(err.Error())
-				ctx.Reply(fmt.Sprintf("Ошибка в сервисе: %s", err.Error()))
-				return err
 			}
+			return nil
+		})
 
-			if currentLastId == lastId {
-				return nil
-			}
-
-			lastId = currentLastId
-
-			for _, student := range students {
-				_, err := bot.Send(&telebot.User{ID: student.ID}, "test")
-				if err != nil {
-					log.Println(err.Error())
-				}
-				time.Sleep(300 * time.Millisecond)
-			}
-		}
+		return nil
 	}, adminHandlers.ValidateAdmin())
 
 	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
@@ -138,7 +123,8 @@ func Run(cfg configs.Bot) error {
 	}
 
 	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 5 * * 1-6", false), gocron.NewTask(func() {
-		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
+		studentService.ForEach(func(student models.Student) error {
+			defer time.Sleep(300 * time.Millisecond)
 			if err := studentService.Validate(student); err != nil {
 				return err
 			}
@@ -173,7 +159,8 @@ func Run(cfg configs.Bot) error {
 	}))
 
 	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 19 * * 1-6", false), gocron.NewTask(func() {
-		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
+		studentService.ForEach(func(student models.Student) error {
+			defer time.Sleep(300 * time.Millisecond)
 			if err := studentService.Validate(student); err != nil {
 				return err
 			}
@@ -200,7 +187,8 @@ func Run(cfg configs.Bot) error {
 	}))
 
 	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 12 * * 0", false), gocron.NewTask(func() {
-		studentHandlers.ForEachStudent(func(bot *telebot.Bot, student models.Student) error {
+		studentService.ForEach(func(student models.Student) error {
+			defer time.Sleep(300 * time.Millisecond)
 			if err := studentService.Validate(student); err != nil {
 				return err
 			}
