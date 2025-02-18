@@ -17,7 +17,6 @@ const (
 )
 
 type studentService interface {
-	Validate(student models.Student) error
 	Create(ctx context.Context, id int64, nickname string) error
 	FindByID(ctx context.Context, id int64) (models.Student, error)
 	UpdateStream(ctx context.Context, id int64, stream string) error
@@ -79,6 +78,18 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 	}
 }
 
+func (s *student) validate(student models.Student) error {
+	if student.ID == 0 {
+		return models.ErrStudentNotFound
+	}
+
+	if student.Stream == nil {
+		return models.ErrStudentStreamMissed
+	}
+
+	return nil
+}
+
 func (s *student) ValidateStudent() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
@@ -89,7 +100,7 @@ func (s *student) ValidateStudent() telebot.MiddlewareFunc {
 				return models.ErrStudentNotFound
 			}
 
-			err := s.service.Validate(modelStudent)
+			err := s.validate(modelStudent)
 			if err != nil {
 				if errors.Is(err, models.ErrStudentStreamMissed) {
 					return ctx.Reply("Укажите группу с помощью команды /setstream")

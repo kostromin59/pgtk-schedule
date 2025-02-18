@@ -26,18 +26,6 @@ func NewStudent(repo studentRepository) *student {
 	}
 }
 
-func (s *student) Validate(student models.Student) error {
-	if student.ID == 0 {
-		return models.ErrStudentNotFound
-	}
-
-	if student.Stream == nil {
-		return models.ErrStudentStreamMissed
-	}
-
-	return nil
-}
-
 func (s *student) Create(ctx context.Context, id int64, nickname string) error {
 	return s.repo.Create(ctx, id, nickname)
 }

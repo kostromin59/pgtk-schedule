@@ -4,7 +4,6 @@ import (
 	"log"
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
-	"pgtk-schedule/internal/models"
 	"pgtk-schedule/internal/repository"
 	"pgtk-schedule/internal/service"
 	"pgtk-schedule/internal/transport/tg"
@@ -57,6 +56,7 @@ func Run(cfg configs.Bot) error {
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
 	adminHandlers := tg.NewAdmin(bot, studentService, cfg.AdminID)
+	notifyHandlers := tg.NewNotify(bot, studentService, scheduleService)
 
 	if err := scheduleService.Update(); err != nil {
 		return err
@@ -108,97 +108,9 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 5 * * 1-6", false), gocron.NewTask(func() {
-		studentService.ForEach(func(student models.Student) error {
-			defer time.Sleep(300 * time.Millisecond)
-			if err := studentService.Validate(student); err != nil {
-				return err
-			}
-
-			substream := ""
-			if student.Substream != nil {
-				substream = *student.Substream
-			}
-
-			weekLessons, err := scheduleService.CurrentWeekLessons(*student.Stream, substream)
-			if err != nil {
-				return err
-			}
-
-			if len(weekLessons) == 0 {
-				return nil
-			}
-
-			lessons, err := scheduleService.TodayLessons(*student.Stream, substream)
-			if err != nil {
-				return err
-			}
-
-			msg := "Сегодня нет пар! Хорошего дня!"
-			if len(lessons) != 0 {
-				msg = "<b>Присылаю пары на сегодня. Расписание может измениться в любой момент, не забывай обновлять его!:</b>\n\n" + scheduleService.LessonsToString(lessons)
-			}
-
-			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
-			return err
-		})
-	}))
-
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 18 * * 1-6", false), gocron.NewTask(func() {
-		studentService.ForEach(func(student models.Student) error {
-			defer time.Sleep(300 * time.Millisecond)
-			if err := studentService.Validate(student); err != nil {
-				return err
-			}
-
-			substream := ""
-			if student.Substream != nil {
-				substream = *student.Substream
-			}
-
-			lessons, err := scheduleService.TomorrowLessons(*student.Stream, substream)
-			if err != nil {
-				return err
-			}
-
-			if len(lessons) == 0 {
-				return nil
-			}
-
-			msg := "<b>Присылаю пары на завтра. Расписание может измениться в любой момент, не забывай обновлять его!:</b>\n\n" + scheduleService.LessonsToString(lessons)
-
-			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
-			return err
-		})
-	}))
-
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 12 * * 0", false), gocron.NewTask(func() {
-		studentService.ForEach(func(student models.Student) error {
-			defer time.Sleep(300 * time.Millisecond)
-			if err := studentService.Validate(student); err != nil {
-				return err
-			}
-
-			substream := ""
-			if student.Substream != nil {
-				substream = *student.Substream
-			}
-
-			lessons, err := scheduleService.CurrentWeekLessons(*student.Stream, substream)
-			if err != nil {
-				return err
-			}
-
-			if len(lessons) == 0 {
-				return nil
-			}
-
-			msg := "<b>Пары на следующую неделю. Расписание может измениться в любой момент, не забывай обновлять его!</b>\n\n" + scheduleService.LessonsToString(lessons)
-
-			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
-			return err
-		})
-	}))
+	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 5 * * 1-6", false), gocron.NewTask(notifyHandlers.Morning))
+	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 18 * * 1-5", false), gocron.NewTask(notifyHandlers.Evening))
+	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 12 * * 0", false), gocron.NewTask(notifyHandlers.Week))
 
 	s.NewJob(gocron.CronJob("0 * * * *", false), gocron.NewTask(func() {
 		if err := scheduleService.Update(); err != nil {
