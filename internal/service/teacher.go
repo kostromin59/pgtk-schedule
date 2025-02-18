@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"pgtk-schedule/internal/models"
 	"strings"
 	"time"
@@ -48,6 +49,9 @@ func (t *teacher) TodayList() ([]string, error) {
 		for _, substream := range substreams {
 			lessons, err := t.scheduleService.TodayLessons(stream.ID, substream)
 			if err != nil {
+				if errors.Is(err, models.ErrLessonsAreEmpty) {
+					continue
+				}
 				return nil, err
 			}
 
