@@ -90,8 +90,11 @@ func (s *student) ValidateStudent() telebot.MiddlewareFunc {
 			}
 
 			err := s.service.Validate(modelStudent)
-			if errors.Is(err, models.ErrStudentStreamMissed) {
-				return ctx.Reply("Укажите группу с помощью команды /setstream")
+			if err != nil {
+				if errors.Is(err, models.ErrStudentStreamMissed) {
+					return ctx.Reply("Укажите группу с помощью команды /setstream")
+				}
+				return err
 			}
 
 			return next(ctx)
