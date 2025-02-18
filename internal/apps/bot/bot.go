@@ -65,7 +65,7 @@ func Run(cfg configs.Bot) error {
 	err = bot.SetCommands([]telebot.Command{
 		{
 			Text:        "/setstream",
-			Description: "Изменение группы и подгруппы",
+			Description: "Измененить группу и подгруппу",
 		},
 		{
 			Text:        "/findteacher",
@@ -136,7 +136,7 @@ func Run(cfg configs.Bot) error {
 
 			msg := "Сегодня нет пар! Хорошего дня!"
 			if len(lessons) != 0 {
-				msg = "<b>Присылаю пары на сегодня. Расписание может измениться, не забывай проверять расписание!:</b>\n" + scheduleService.LessonsToString(lessons)
+				msg = "<b>Присылаю пары на сегодня. Расписание может измениться в любой момент, не забывай обновлять его!:</b>\n\n" + scheduleService.LessonsToString(lessons)
 			}
 
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
@@ -165,7 +165,7 @@ func Run(cfg configs.Bot) error {
 				return nil
 			}
 
-			msg := "<b>Присылаю пары на завтра. Расписание может измениться, не забывай проверять расписание!</b>\n" + scheduleService.LessonsToString(lessons)
+			msg := "<b>Присылаю пары на завтра. Расписание может измениться в любой момент, не забывай обновлять его!:</b>\n\n" + scheduleService.LessonsToString(lessons)
 
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
 			return err
@@ -193,7 +193,7 @@ func Run(cfg configs.Bot) error {
 				return nil
 			}
 
-			msg := "<b>Пары на следующую неделю:</b>\n" + scheduleService.LessonsToString(lessons)
+			msg := "<b>Пары на следующую неделю. Расписание может измениться в любой момент, не забывай обновлять его!</b>\n\n" + scheduleService.LessonsToString(lessons)
 
 			_, err = bot.Send(&telebot.User{ID: student.ID}, msg)
 			return err
