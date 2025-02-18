@@ -74,6 +74,10 @@ func (s *schedule) dateLessons(stream, substream string, date time.Time) ([]mode
 		lessons = append(lessons, lesson)
 	}
 
+	if len(lessons) == 0 {
+		return nil, models.ErrLessonsAreEmpty
+	}
+
 	return lessons, nil
 }
 

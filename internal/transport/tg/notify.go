@@ -183,7 +183,7 @@ func (n *notify) Morning() {
 				return err
 			}
 		} else {
-			msg = "<b>Присылаю пары на сегодня. Расписание может измениться в любой момент, не забывай обновлять его!:</b>\n\n" + n.scheduleService.LessonsToString(lessons)
+			msg = "<b>Присылаю пары на сегодня. Расписание может измениться в любой момент, не забывай обновлять его!</b>\n\n" + n.scheduleService.LessonsToString(lessons)
 		}
 
 		_, err = n.bot.Send(&telebot.User{ID: student.ID}, msg)
@@ -219,7 +219,7 @@ func (n *notify) Evening() {
 			return err
 		}
 
-		msg := "<b>Присылаю пары на завтра. Расписание может измениться в любой момент, не забывай обновлять его!:</b>\n\n" + n.scheduleService.LessonsToString(lessons)
+		msg := "<b>Присылаю пары на завтра. Расписание может измениться в любой момент, не забывай обновлять его!</b>\n\n" + n.scheduleService.LessonsToString(lessons)
 
 		_, err = n.bot.Send(&telebot.User{ID: student.ID}, msg)
 		return err

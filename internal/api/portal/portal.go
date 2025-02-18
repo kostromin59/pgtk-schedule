@@ -146,7 +146,7 @@ func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, 
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	if p.lessons == nil {
+	if len(p.lessons) == 0 {
 		return nil, models.ErrLessonsAreEmpty
 	}
 
@@ -205,6 +205,10 @@ func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, 
 			DateStart: combinedStartDateTime,
 			DateEnd:   combinedEndDateTime,
 		})
+	}
+
+	if len(lessons) == 0 {
+		return nil, models.ErrLessonsAreEmpty
 	}
 
 	return lessons, nil
