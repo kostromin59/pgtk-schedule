@@ -50,7 +50,7 @@ func (s *schedule) CurrentWeekLessons() telebot.HandlerFunc {
 		lessons, err := s.service.CurrentWeekLessons(stream, substream)
 		if err != nil {
 			if errors.Is(err, models.ErrLessonsAreEmpty) {
-				return ctx.Reply("Расписание не найдено! Попробуйте ещё раз через пару минут.")
+				return ctx.Reply("Расписание не найдено! опробуйте ещё раз через пару минут, если читаете, что это ошибка.")
 			}
 			return err
 		}
@@ -77,7 +77,7 @@ func (s *schedule) TodayLessons() telebot.HandlerFunc {
 		lessons, err := s.service.TodayLessons(stream, substream)
 		if err != nil {
 			if errors.Is(err, models.ErrLessonsAreEmpty) {
-				return ctx.Reply("Расписание не найдено! Попробуйте ещё раз через пару минут.")
+				return ctx.Reply("Расписание не найдено! Попробуйте ещё раз через пару минут, если читаете, что это ошибка.")
 			}
 			return err
 		}
@@ -104,7 +104,7 @@ func (s *schedule) TomorrowLessons() telebot.HandlerFunc {
 		lessons, err := s.service.TomorrowLessons(stream, substream)
 		if err != nil {
 			if errors.Is(err, models.ErrLessonsAreEmpty) {
-				return ctx.Reply("Расписание не найдено! Попробуйте ещё раз через пару минут.")
+				return ctx.Reply("Расписание не найдено! опробуйте ещё раз через пару минут, если читаете, что это ошибка.")
 			}
 			return err
 		}
