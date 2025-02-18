@@ -93,6 +93,9 @@ func (t *teacher) Find(teacher string) (models.Lesson, error) {
 		for _, substream := range substreams {
 			lessons, err := t.scheduleService.TodayLessons(stream.ID, substream)
 			if err != nil {
+				if errors.Is(err, models.ErrLessonsAreEmpty) {
+					continue
+				}
 				return models.Lesson{}, err
 			}
 
