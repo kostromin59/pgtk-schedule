@@ -114,8 +114,6 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
-	notifyHandlers.Evening()
-
 	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 5 * * 1-6", false), gocron.NewTask(notifyHandlers.Morning))
 	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 18 * * 1-5", false), gocron.NewTask(notifyHandlers.Evening))
 	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 12 * * 0", false), gocron.NewTask(notifyHandlers.Week))
