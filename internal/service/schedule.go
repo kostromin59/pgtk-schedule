@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	weekdates = map[time.Weekday]string{
+	weekdays = map[time.Weekday]string{
 		time.Sunday:    "ВОСКРЕСЕНЬЕ",
 		time.Monday:    "ПОНЕДЕЛЬНИК",
 		time.Tuesday:   "ВТОРНИК",
@@ -22,13 +22,13 @@ var (
 	}
 
 	weekdayKeys = [...]string{
-		weekdates[time.Monday],
-		weekdates[time.Tuesday],
-		weekdates[time.Wednesday],
-		weekdates[time.Thursday],
-		weekdates[time.Friday],
-		weekdates[time.Saturday],
-		weekdates[time.Sunday],
+		weekdays[time.Monday],
+		weekdays[time.Tuesday],
+		weekdays[time.Wednesday],
+		weekdays[time.Thursday],
+		weekdays[time.Friday],
+		weekdays[time.Saturday],
+		weekdays[time.Sunday],
 	}
 )
 
@@ -112,14 +112,14 @@ func (s *schedule) CurrentWeekLessons(stream, substream string) ([]models.Lesson
 }
 
 func (s *schedule) LessonsToString(lessons []models.Lesson) string {
-	mapLessons := make(map[string][]models.Lesson, len(weekdates))
+	mapLessons := make(map[string][]models.Lesson, len(weekdays))
 
 	for _, lesson := range lessons {
-		weekdayLessons, ok := mapLessons[weekdates[lesson.DateStart.Weekday()]]
+		weekdayLessons, ok := mapLessons[weekdays[lesson.DateStart.Weekday()]]
 		if !ok {
-			mapLessons[weekdates[lesson.DateStart.Weekday()]] = []models.Lesson{lesson}
+			mapLessons[weekdays[lesson.DateStart.Weekday()]] = []models.Lesson{lesson}
 		} else {
-			mapLessons[weekdates[lesson.DateStart.Weekday()]] = append(weekdayLessons, lesson)
+			mapLessons[weekdays[lesson.DateStart.Weekday()]] = append(weekdayLessons, lesson)
 		}
 	}
 
