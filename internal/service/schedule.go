@@ -98,10 +98,6 @@ func (s *schedule) CurrentWeekLessons(stream, substream string) ([]models.Lesson
 		return nil, err
 	}
 
-	if len(lessons) == 0 {
-		return nil, models.ErrLessonsAreEmpty
-	}
-
 	slices.SortFunc(lessons, func(a, b models.Lesson) int {
 		if a.DateStart.Before(b.DateStart) {
 			return -1

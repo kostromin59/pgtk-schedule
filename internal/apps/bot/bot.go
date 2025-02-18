@@ -74,12 +74,12 @@ func Run(cfg configs.Bot) error {
 			Description: "Найти преподавателя",
 		},
 		{
-			Text:        "/feedback",
-			Description: "Связаться с разработчиком",
-		},
-		{
 			Text:        "/notifysettings",
 			Description: "Изменить настройки уведомлений",
+		},
+		{
+			Text:        "/feedback",
+			Description: "Связаться с разработчиком",
 		},
 	})
 	if err != nil {
