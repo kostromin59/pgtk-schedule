@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"pgtk-schedule/internal/models"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,7 +27,13 @@ func (ns *notifySettings) FindByStudentID(ctx context.Context, studentId int64) 
 	}
 
 	err := row.Scan(&notifySettings.ID, &notifySettings.Morning, &notifySettings.Evening, &notifySettings.Week)
-	return notifySettings, err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.NotifySettings{}, models.ErrNotifySettingsNotFound
+		}
+		return models.NotifySettings{}, err
+	}
+	return notifySettings, nil
 }
 
 func (ns *notifySettings) ToggleMorning(ctx context.Context, studentId int64) error {
