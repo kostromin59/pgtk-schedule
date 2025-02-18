@@ -1,11 +1,18 @@
 package tg
 
 import (
+	"context"
 	"errors"
 	"pgtk-schedule/internal/models"
 	"time"
 
 	"gopkg.in/telebot.v4"
+)
+
+const (
+	actionToggleMorning = "toggleMorning"
+	actionToggleEvening = "toggleEvening"
+	actionToggleWeek    = "toggleWeek"
 )
 
 type studentServiceForNotify interface {
@@ -19,18 +26,124 @@ type scheduleServiceForNotify interface {
 	LessonsToString(lessons []models.Lesson) string
 }
 
-type notify struct {
-	bot             *telebot.Bot
-	studentService  studentServiceForNotify
-	scheduleService scheduleService
+type notifySettingsService interface {
+	FindByStudentID(ctx context.Context, studentId int64) (models.NotifySettings, error)
+	ToggleMorning(ctx context.Context, studentId int64) error
+	ToggleEvening(ctx context.Context, studentId int64) error
+	ToggleWeek(ctx context.Context, studentId int64) error
 }
 
-func NewNotify(bot *telebot.Bot, studentService studentServiceForNotify, scheduleService scheduleService) *notify {
+type notify struct {
+	bot                   *telebot.Bot
+	studentService        studentServiceForNotify
+	scheduleService       scheduleServiceForNotify
+	notifySettingsSerivce notifySettingsService
+}
+
+func NewNotify(bot *telebot.Bot, studentService studentServiceForNotify, scheduleService scheduleService, notifySettingsService notifySettingsService) *notify {
 	return &notify{
-		bot:             bot,
-		studentService:  studentService,
-		scheduleService: scheduleService,
+		bot:                   bot,
+		studentService:        studentService,
+		scheduleService:       scheduleService,
+		notifySettingsSerivce: notifySettingsService,
 	}
+}
+
+func (n *notify) Change() telebot.HandlerFunc {
+	n.bot.Handle("\f"+actionToggleMorning, func(ctx telebot.Context) error {
+		err := n.notifySettingsSerivce.ToggleMorning(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		r := n.buildKeyboard(settings)
+
+		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", r)
+		return err
+	})
+
+	n.bot.Handle("\f"+actionToggleEvening, func(ctx telebot.Context) error {
+		err := n.notifySettingsSerivce.ToggleEvening(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		r := n.buildKeyboard(settings)
+
+		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", r)
+		return err
+	})
+
+	n.bot.Handle("\f"+actionToggleWeek, func(ctx telebot.Context) error {
+		err := n.notifySettingsSerivce.ToggleWeek(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		r := n.buildKeyboard(settings)
+
+		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", r)
+		return err
+	})
+
+	return func(ctx telebot.Context) error {
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), ctx.Sender().ID)
+		if err != nil {
+			return err
+		}
+
+		r := n.buildKeyboard(settings)
+
+		return ctx.Reply("Изменение настроек уведомлений:", r)
+	}
+}
+
+func (n *notify) buildKeyboard(settings models.NotifySettings) *telebot.ReplyMarkup {
+	state := [...]struct {
+		Text   string
+		Action string
+		State  bool
+	}{
+		{Text: "утренние уведомления", Action: actionToggleMorning, State: settings.Morning},
+		{Text: "вечерние уведомления", Action: actionToggleEvening, State: settings.Evening},
+		{Text: "недельные уведомления", Action: actionToggleWeek, State: settings.Week},
+	}
+
+	r := n.bot.NewMarkup()
+
+	btns := make([]telebot.Row, 0, len(state))
+	for _, s := range state {
+		var text string
+		if s.State {
+			text = "Выключить "
+		} else {
+			text = "Включить "
+		}
+
+		text += s.Text
+
+		b := r.Data(text, s.Action)
+		btns = append(btns, r.Row(b))
+	}
+
+	r.Inline(btns...)
+
+	return r
 }
 
 func (n *notify) Morning() {
@@ -40,12 +153,20 @@ func (n *notify) Morning() {
 			return err
 		}
 
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), student.ID)
+		if err != nil {
+			return err
+		}
+		if !settings.Morning {
+			return nil
+		}
+
 		substream := ""
 		if student.Substream != nil {
 			substream = *student.Substream
 		}
 
-		_, err := n.scheduleService.CurrentWeekLessons(*student.Stream, substream)
+		_, err = n.scheduleService.CurrentWeekLessons(*student.Stream, substream)
 		if err != nil {
 			if errors.Is(err, models.ErrLessonsAreEmpty) {
 				return nil
@@ -77,6 +198,14 @@ func (n *notify) Evening() {
 			return err
 		}
 
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), student.ID)
+		if err != nil {
+			return err
+		}
+		if !settings.Evening {
+			return nil
+		}
+
 		substream := ""
 		if student.Substream != nil {
 			substream = *student.Substream
@@ -102,6 +231,14 @@ func (n *notify) Week() {
 		defer time.Sleep(300 * time.Millisecond)
 		if err := n.validate(student); err != nil {
 			return err
+		}
+
+		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), student.ID)
+		if err != nil {
+			return err
+		}
+		if !settings.Week {
+			return nil
 		}
 
 		substream := ""

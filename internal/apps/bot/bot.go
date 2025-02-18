@@ -45,18 +45,20 @@ func Run(cfg configs.Bot) error {
 
 	// Repository
 	studentRepo := repository.NewStudent(pool)
+	notifySettingsRepo := repository.NewNotifySettings(pool)
 
 	// Service
 	studentService := service.NewStudent(studentRepo)
 	scheduleService := service.NewSchedule(portal)
 	teacherService := service.NewTeacher(portal, scheduleService)
+	notifySettingsService := service.NewNotifySettings(notifySettingsRepo)
 
 	// Handlers
 	studentHandlers := tg.NewStudent(bot, studentService, portal)
 	scheduleHandlers := tg.NewSchedule(scheduleService)
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
 	adminHandlers := tg.NewAdmin(bot, studentService, cfg.AdminID)
-	notifyHandlers := tg.NewNotify(bot, studentService, scheduleService)
+	notifyHandlers := tg.NewNotify(bot, studentService, scheduleService, notifySettingsService)
 
 	if err := scheduleService.Update(); err != nil {
 		return err
@@ -75,6 +77,10 @@ func Run(cfg configs.Bot) error {
 			Text:        "/feedback",
 			Description: "Связаться с разработчиком",
 		},
+		{
+			Text:        "/notifysettings",
+			Description: "Изменить настройки уведомлений",
+		},
 	})
 	if err != nil {
 		return err
@@ -92,11 +98,11 @@ func Run(cfg configs.Bot) error {
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 	bot.Handle("/findteacher", teacherHandlers.Find())
+	bot.Handle("/send", adminHandlers.Send(), adminHandlers.ValidateAdmin())
+	bot.Handle("/notifysettings", notifyHandlers.Change(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle("/feedback", func(ctx telebot.Context) error {
 		return ctx.Reply("Напишите @kostromin59, чтобы сообщить о проблеме, предложить новый функционал или договориться о дальнейшей поддержке бота")
 	})
-
-	bot.Handle("/send", adminHandlers.Send(), adminHandlers.ValidateAdmin())
 
 	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
