@@ -25,3 +25,14 @@ go tool goose postgres "host=localhost user=u password=pwd port=5432 database=pg
 ```sh
 go tool goose postgres "host=localhost user=u password=pwd port=5432 database=pgtk" down -dir migrations
 ```
+
+## Команды администратора
+
+### /send
+
+Позволяет отправить всем пользователям сообщение.
+
+Пример использования:
+```
+/send Привет, мир!
+```
