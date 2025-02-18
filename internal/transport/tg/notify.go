@@ -61,9 +61,9 @@ func (n *notify) Change() telebot.HandlerFunc {
 			return err
 		}
 
-		r := n.buildKeyboard(settings)
+		markup := n.buildMarkup(settings)
 
-		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", r)
+		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", markup)
 		return err
 	})
 
@@ -78,9 +78,9 @@ func (n *notify) Change() telebot.HandlerFunc {
 			return err
 		}
 
-		r := n.buildKeyboard(settings)
+		markup := n.buildMarkup(settings)
 
-		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", r)
+		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", markup)
 		return err
 	})
 
@@ -95,9 +95,9 @@ func (n *notify) Change() telebot.HandlerFunc {
 			return err
 		}
 
-		r := n.buildKeyboard(settings)
+		markup := n.buildMarkup(settings)
 
-		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", r)
+		_, err = n.bot.Edit(ctx.Callback().Message, "Изменение настроек уведомлений:", markup)
 		return err
 	})
 
@@ -107,13 +107,13 @@ func (n *notify) Change() telebot.HandlerFunc {
 			return err
 		}
 
-		r := n.buildKeyboard(settings)
+		markup := n.buildMarkup(settings)
 
-		return ctx.Reply("Изменение настроек уведомлений:", r)
+		return ctx.Reply("Изменение настроек уведомлений:", markup)
 	}
 }
 
-func (n *notify) buildKeyboard(settings models.NotifySettings) *telebot.ReplyMarkup {
+func (n *notify) buildMarkup(settings models.NotifySettings) *telebot.ReplyMarkup {
 	state := [...]struct {
 		Text   string
 		Action string
@@ -124,7 +124,7 @@ func (n *notify) buildKeyboard(settings models.NotifySettings) *telebot.ReplyMar
 		{Text: "недельные уведомления", Action: actionToggleWeek, State: settings.Week},
 	}
 
-	r := n.bot.NewMarkup()
+	markup := n.bot.NewMarkup()
 
 	btns := make([]telebot.Row, 0, len(state))
 	for _, s := range state {
@@ -137,13 +137,13 @@ func (n *notify) buildKeyboard(settings models.NotifySettings) *telebot.ReplyMar
 
 		text += s.Text
 
-		b := r.Data(text, s.Action)
-		btns = append(btns, r.Row(b))
+		b := markup.Data(text, s.Action)
+		btns = append(btns, markup.Row(b))
 	}
 
-	r.Inline(btns...)
+	markup.Inline(btns...)
 
-	return r
+	return markup
 }
 
 func (n *notify) Morning() {

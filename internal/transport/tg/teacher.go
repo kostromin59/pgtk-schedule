@@ -58,12 +58,12 @@ func (t *teacher) Find() telebot.HandlerFunc {
 		}
 
 		if len(teachers) == 0 {
-			return ctx.Reply("Либо расписание ещё не загрузилось, либо сегодня нет пар :)")
+			return ctx.Reply("Преподаватели не найдены!")
 		}
 
 		slices.Sort(teachers)
 
-		r := t.bot.NewMarkup()
+		markup := t.bot.NewMarkup()
 
 		btns := make([]telebot.Row, 0, len(teachers))
 		for _, teacher := range teachers {
@@ -78,11 +78,11 @@ func (t *teacher) Find() telebot.HandlerFunc {
 				data += splitted[1]
 			}
 
-			b := r.Data(teacher, actionFindTeacher, data)
-			btns = append(btns, r.Row(b))
+			b := markup.Data(teacher, actionFindTeacher, data)
+			btns = append(btns, markup.Row(b))
 		}
-		r.Inline(btns...)
+		markup.Inline(btns...)
 
-		return ctx.Reply("Список преподавателей, у которых сегодня есть пары:", r)
+		return ctx.Reply("Список преподавателей, у которых сегодня есть пары:", markup)
 	}
 }

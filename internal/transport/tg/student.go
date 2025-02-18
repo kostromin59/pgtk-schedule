@@ -149,16 +149,16 @@ func (s *student) SetStream() telebot.HandlerFunc {
 			return err
 		}
 
-		r := s.bot.NewMarkup()
+		markup := s.bot.NewMarkup()
 
 		btns := make([]telebot.Row, 0, len(streams))
 		for _, substream := range foundStream.Substreams {
-			b := r.Data(substream, actionSetSubstream, substream)
-			btns = append(btns, r.Row(b))
+			b := markup.Data(substream, actionSetSubstream, substream)
+			btns = append(btns, markup.Row(b))
 		}
-		r.Inline(btns...)
+		markup.Inline(btns...)
 
-		_, err = s.bot.Edit(ctx.Callback().Message, "Выберите подгруппу:", r)
+		_, err = s.bot.Edit(ctx.Callback().Message, "Выберите подгруппу:", markup)
 		return err
 	})
 
@@ -176,15 +176,15 @@ func (s *student) SetStream() telebot.HandlerFunc {
 
 	return func(ctx telebot.Context) error {
 		streams := s.portal.Streams()
-		r := s.bot.NewMarkup()
+		markup := s.bot.NewMarkup()
 
 		btns := make([]telebot.Row, 0, len(streams))
 		for _, stream := range streams {
-			b := r.Data(stream.Name, actionSetStream, stream.ID)
-			btns = append(btns, r.Row(b))
+			b := markup.Data(stream.Name, actionSetStream, stream.ID)
+			btns = append(btns, markup.Row(b))
 		}
-		r.Inline(btns...)
+		markup.Inline(btns...)
 
-		return ctx.Reply("Выберите группу:", r)
+		return ctx.Reply("Выберите группу:", markup)
 	}
 }

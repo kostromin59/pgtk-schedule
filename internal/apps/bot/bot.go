@@ -86,15 +86,15 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
-	r := bot.NewMarkup()
-	weekButton := r.Text("Получить расписание на неделю")
-	todayButton := r.Text("На сегодня")
-	tomorrowButton := r.Text("На завтра")
-	r.ResizeKeyboard = true
-	r.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
+	markup := bot.NewMarkup()
+	weekButton := markup.Text("Получить расписание на неделю")
+	todayButton := markup.Text("На сегодня")
+	tomorrowButton := markup.Text("На завтра")
+	markup.ResizeKeyboard = true
+	markup.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
-		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.\n\nИспользуйте команду /feedback для обратной связи.", r)
+		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.\n\nИспользуйте команду /feedback для обратной связи.", markup)
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 	bot.Handle("/findteacher", teacherHandlers.Find())
