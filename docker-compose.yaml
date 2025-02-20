@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16
     container_name: pgtk-schedule-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -15,6 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: pgtk-schedule-bot
+    restart: unless-stopped
     depends_on:
       - db
     environment:
