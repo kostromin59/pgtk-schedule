@@ -5,5 +5,6 @@ RUN go build -o bot cmd/bot/main.go
 
 FROM alpine:latest AS runner
 WORKDIR /app
+RUN apk add --no-cache tzdata
 COPY --from=builder /app/bot ./
 CMD ["/app/bot"]
