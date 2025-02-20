@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatal(err.Error())
+		log.Println(".env not found")
 	}
 
 	var cfg configs.Bot
