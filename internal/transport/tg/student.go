@@ -63,6 +63,23 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 				return err
 			}
 
+			if student.Nickname == nil {
+				err := s.service.UpdateNickname(context.Background(), student.ID, ctx.Sender().Username)
+				if err != nil {
+					return err
+				}
+
+				student.Nickname = &ctx.Sender().Username
+			}
+
+			if student.Nickname != nil && ctx.Sender().Username != *student.Nickname {
+				err := s.service.UpdateNickname(context.Background(), student.ID, ctx.Sender().Username)
+				if err != nil {
+					return err
+				}
+				student.Nickname = &ctx.Sender().Username
+			}
+
 			ctx.Set(KeyStudent, student)
 
 			if student.Stream != nil {
