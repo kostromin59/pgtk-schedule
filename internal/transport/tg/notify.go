@@ -157,6 +157,7 @@ func (n *notify) Morning() {
 		if err != nil {
 			return err
 		}
+
 		if !settings.Morning {
 			return nil
 		}
@@ -171,19 +172,18 @@ func (n *notify) Morning() {
 			if errors.Is(err, models.ErrLessonsAreEmpty) {
 				return nil
 			}
+
 			return err
 		}
 
 		lessons, err := n.scheduleService.TodayLessons(*student.Stream, substream)
-		var msg string
+		msg := "<b>Присылаю пары на сегодня. Расписание может измениться в любой момент, не забывай обновлять его!</b>\n\n" + n.scheduleService.LessonsToString(lessons)
 		if err != nil {
 			if errors.Is(err, models.ErrLessonsAreEmpty) {
-				msg = "Сегодня нет пар! Хорошего дня!"
-			} else {
-				return err
+				return nil
 			}
-		} else {
-			msg = "<b>Присылаю пары на сегодня. Расписание может измениться в любой момент, не забывай обновлять его!</b>\n\n" + n.scheduleService.LessonsToString(lessons)
+
+			return err
 		}
 
 		_, err = n.bot.Send(&telebot.User{ID: student.ID}, msg)
