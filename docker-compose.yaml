@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16
+    container_name: pgtk-schedule-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pgtk-schedule-bot
+    depends_on:
+      - db
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_ID=${ADMIN_ID}
+      - DB_CONN=${DB_CONN}
+
+volumes:
+  postgres_data:
