@@ -38,7 +38,7 @@ func Run(cfg configs.Bot) error {
 	portal := portal.New()
 
 	// Database
-	pool, err := database.NewPgx(cfg.DB_CONN)
+	pool, err := database.NewPgx(cfg.DbConn)
 	if err != nil {
 		return err
 	}
