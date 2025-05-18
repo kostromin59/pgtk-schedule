@@ -250,16 +250,16 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 	}
 
 	if index == len(p.weeks)-1 {
-		return p.weeks[index], nil
+		return weeks[index], nil
 	}
 
 	weekday := now.Weekday()
 	if weekday == time.Saturday && now.Hour() >= saturdayNextDayHours {
-		return p.weeks[index+1], nil
+		return weeks[index+1], nil
 	}
 
 	if weekday == time.Sunday {
-		return p.weeks[index+1], nil
+		return weeks[index+1], nil
 	}
 
 	return weeks[index], nil
