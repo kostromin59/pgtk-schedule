@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	baseUrl     = "https://portal.pgtk-perm.ru/shedule/public"
+	baseUrl     = "https://psi.thinkery.ru/shedule/public"
 	scheduleUrl = baseUrl + "/public_shedule"
 	weeksUrl    = baseUrl + "/get_weekdates_actual"
 	gridUrl     = baseUrl + "/public_shedule_spo_grid"
