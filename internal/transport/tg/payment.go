@@ -10,7 +10,7 @@ import (
 )
 
 type studentPayer interface {
-	SetIsPayed(ctx context.Context, id int64) error
+	SetIsPaid(ctx context.Context, id int64) error
 }
 
 type payment struct {
@@ -31,7 +31,7 @@ func (p *payment) OnPayment() telebot.HandlerFunc {
 	return func(ctx telebot.Context) error {
 		log.Println("got payment query", ctx.Sender().ID)
 
-		err := p.studentPayer.SetIsPayed(context.Background(), ctx.Sender().ID)
+		err := p.studentPayer.SetIsPaid(context.Background(), ctx.Sender().ID)
 		if err != nil {
 			_, _ = p.bot.Send(&telebot.User{ID: ctx.Sender().ID}, "Произошла ошибка при обработке платежа. Напишите администратору при помощи команды /feedback.")
 			return err
@@ -69,7 +69,7 @@ func (p *payment) Validate() telebot.MiddlewareFunc {
 				return next(ctx)
 			}
 
-			if student, ok := ctx.Get(KeyStudent).(models.Student); ok && student.IsPayed {
+			if student, ok := ctx.Get(KeyStudent).(models.Student); ok && student.IsPaid {
 				return next(ctx)
 			}
 

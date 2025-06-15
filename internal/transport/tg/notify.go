@@ -153,7 +153,7 @@ func (n *notify) Morning() {
 			return err
 		}
 
-		if !student.IsPayed {
+		if !student.IsPaid {
 			return nil
 		}
 
@@ -202,7 +202,7 @@ func (n *notify) Evening() {
 			return err
 		}
 
-		if !student.IsPayed {
+		if !student.IsPaid {
 			return nil
 		}
 
@@ -241,7 +241,7 @@ func (n *notify) Week() {
 			return err
 		}
 
-		if !student.IsPayed {
+		if !student.IsPaid {
 			return nil
 		}
 

@@ -12,5 +12,5 @@ type Student struct {
 	Nickname  *string
 	Stream    *string
 	Substream *string
-	IsPayed   bool
+	IsPaid    bool
 }
