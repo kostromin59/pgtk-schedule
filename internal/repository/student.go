@@ -26,13 +26,13 @@ func (s *student) Create(ctx context.Context, id int64, nickname string) error {
 }
 
 func (s *student) FindByID(ctx context.Context, id int64) (models.Student, error) {
-	query := `SELECT nickname, stream, substream FROM students WHERE id = $1;`
+	query := `SELECT nickname, stream, substream, is_payed FROM students WHERE id = $1;`
 	row := s.pool.QueryRow(ctx, query, id)
 	student := models.Student{
 		ID: id,
 	}
 
-	err := row.Scan(&student.Nickname, &student.Stream, &student.Substream)
+	err := row.Scan(&student.Nickname, &student.Stream, &student.Substream, &student.IsPayed)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return student, models.ErrStudentNotFound
@@ -45,7 +45,7 @@ func (s *student) FindByID(ctx context.Context, id int64) (models.Student, error
 }
 
 func (s *student) FindAll(ctx context.Context, id int64, limit int) ([]models.Student, int64, error) {
-	query := `SELECT id, nickname, stream, substream FROM students
+	query := `SELECT id, nickname, stream, substream, is_payed FROM students
 	WHERE id > $1 ORDER BY id LIMIT $2`
 	rows, err := s.pool.Query(ctx, query, id, limit)
 	if err != nil {
@@ -97,6 +97,20 @@ func (s *student) UpdateSubstream(ctx context.Context, id int64, substream strin
 func (s *student) UpdateNickname(ctx context.Context, id int64, nickname string) error {
 	query := `UPDATE students SET nickname = $1 WHERE id = $2;`
 	rows, err := s.pool.Exec(ctx, query, nickname, id)
+	if err != nil {
+		return err
+	}
+
+	if rows.RowsAffected() != 1 {
+		return models.ErrStudentNotFound
+	}
+
+	return nil
+}
+
+func (s *student) SetIsPayed(ctx context.Context, id int64) error {
+	query := `UPDATE students SET is_payed = true WHERE id = $1;`
+	rows, err := s.pool.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}

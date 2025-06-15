@@ -58,7 +58,7 @@ func TestRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tc.expectedStatus)
-				w.Write(tc.expectedBody)
+				_, _ = w.Write(tc.expectedBody)
 			}))
 			defer ts.Close()
 

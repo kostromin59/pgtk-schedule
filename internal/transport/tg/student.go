@@ -55,6 +55,7 @@ func (s *student) RegisteredStudent() telebot.MiddlewareFunc {
 					ctx.Set(KeyStudent, models.Student{
 						ID:       ctx.Sender().ID,
 						Nickname: &ctx.Sender().Username,
+						IsPayed:  student.IsPayed,
 					})
 
 					return next(ctx)

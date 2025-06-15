@@ -8,6 +8,8 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
+const KeyIsAdmin string = "isAdmin"
+
 type adminStudentService interface {
 	ForEach(func(models.Student) error)
 }
@@ -46,6 +48,8 @@ func (a *admin) ValidateAdmin() telebot.MiddlewareFunc {
 			if ctx.Sender().ID != a.adminId {
 				return nil
 			}
+
+			ctx.Set(KeyIsAdmin, true)
 
 			return next(ctx)
 		}

@@ -13,6 +13,7 @@ type studentRepository interface {
 	UpdateStream(ctx context.Context, id int64, stream string) error
 	UpdateSubstream(ctx context.Context, id int64, substream string) error
 	UpdateNickname(ctx context.Context, id int64, nickname string) error
+	SetIsPayed(ctx context.Context, id int64) error
 	FindAll(ctx context.Context, id int64, limit int) ([]models.Student, int64, error)
 }
 
@@ -44,6 +45,10 @@ func (s *student) UpdateSubstream(ctx context.Context, id int64, substream strin
 
 func (s *student) UpdateNickname(ctx context.Context, id int64, nickname string) error {
 	return s.repo.UpdateNickname(ctx, id, nickname)
+}
+
+func (s *student) SetIsPayed(ctx context.Context, id int64) error {
+	return s.repo.SetIsPayed(ctx, id)
 }
 
 func (s *student) ForEach(fn func(student models.Student) error) {

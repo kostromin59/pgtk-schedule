@@ -20,11 +20,11 @@ func Run(cfg configs.Bot) error {
 		Token: cfg.BotToken,
 		OnError: func(err error, ctx telebot.Context) {
 			log.Println(err.Error(), ctx.Sender().ID)
-			ctx.Reply("Что-то пошло не так! Напишите @kostromin59 о проблеме.")
+			_ = ctx.Reply("Что-то пошло не так! Напишите @kostromin59 о проблеме.")
 		},
 		Poller: &telebot.LongPoller{
 			Timeout:        3 * time.Second,
-			AllowedUpdates: []string{"message", "chat_member", "callback_query", "poll", "inline_query"},
+			AllowedUpdates: []string{"message", "chat_member", "pre_checkout_query", "callback_query", "poll", "inline_query"},
 		},
 		ParseMode: telebot.ModeHTML,
 	}
@@ -59,6 +59,7 @@ func Run(cfg configs.Bot) error {
 	teacherHandlers := tg.NewTeacher(bot, teacherService)
 	adminHandlers := tg.NewAdmin(bot, studentService, cfg.AdminID)
 	notifyHandlers := tg.NewNotify(bot, studentService, scheduleService, notifySettingsService)
+	paymentHandlers := tg.NewPayment(bot, cfg.PaymentToken, studentService)
 
 	if err := scheduleService.Update(); err != nil {
 		return err
@@ -97,16 +98,19 @@ func Run(cfg configs.Bot) error {
 		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.\n\nИспользуйте команду /feedback для обратной связи.", markup)
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
-	bot.Handle("/findteacher", teacherHandlers.Find())
+	bot.Handle("/findteacher", teacherHandlers.Find(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent(), paymentHandlers.Validate())
 	bot.Handle("/send", adminHandlers.Send(), adminHandlers.ValidateAdmin())
 	bot.Handle("/notifysettings", notifyHandlers.Change(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
 	bot.Handle("/feedback", func(ctx telebot.Context) error {
 		return ctx.Reply("Напишите @kostromin59, чтобы сообщить о проблеме, предложить новый функционал или договориться о дальнейшей поддержке бота")
 	})
 
-	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
-	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
-	bot.Handle(&tomorrowButton, scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent())
+	bot.Handle(telebot.OnPayment, paymentHandlers.OnPayment())
+	bot.Handle(telebot.OnCheckout, paymentHandlers.OnCheckout())
+
+	bot.Handle(&weekButton, scheduleHandlers.CurrentWeekLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent(), paymentHandlers.Validate())
+	bot.Handle(&todayButton, scheduleHandlers.TodayLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent(), paymentHandlers.Validate())
+	bot.Handle(&tomorrowButton, scheduleHandlers.TomorrowLessons(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent(), paymentHandlers.Validate())
 
 	// Cron jobs
 	s, err := gocron.NewScheduler()
@@ -114,11 +118,11 @@ func Run(cfg configs.Bot) error {
 		return err
 	}
 
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 5 * * 1-6", false), gocron.NewTask(notifyHandlers.Morning))
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 18 * * 1-5", false), gocron.NewTask(notifyHandlers.Evening))
-	s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 12 * * 0", false), gocron.NewTask(notifyHandlers.Week))
+	_, _ = s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 5 * * 1-6", false), gocron.NewTask(notifyHandlers.Morning))
+	_, _ = s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 18 * * 1-5", false), gocron.NewTask(notifyHandlers.Evening))
+	_, _ = s.NewJob(gocron.CronJob("TZ=Asia/Yekaterinburg 0 12 * * 0", false), gocron.NewTask(notifyHandlers.Week))
 
-	s.NewJob(gocron.CronJob("0 * * * *", false), gocron.NewTask(func() {
+	_, _ = s.NewJob(gocron.CronJob("0 * * * *", false), gocron.NewTask(func() {
 		if err := scheduleService.Update(); err != nil {
 			log.Println(err.Error())
 		}
@@ -126,7 +130,9 @@ func Run(cfg configs.Bot) error {
 	}))
 
 	s.Start()
-	defer s.Shutdown()
+	defer func() {
+		_ = s.Shutdown()
+	}()
 
 	bot.Start()
 

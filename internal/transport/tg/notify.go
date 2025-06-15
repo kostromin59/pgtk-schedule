@@ -153,6 +153,10 @@ func (n *notify) Morning() {
 			return err
 		}
 
+		if !student.IsPayed {
+			return nil
+		}
+
 		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), student.ID)
 		if err != nil {
 			return err
@@ -198,6 +202,10 @@ func (n *notify) Evening() {
 			return err
 		}
 
+		if !student.IsPayed {
+			return nil
+		}
+
 		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), student.ID)
 		if err != nil {
 			return err
@@ -231,6 +239,10 @@ func (n *notify) Week() {
 		defer time.Sleep(300 * time.Millisecond)
 		if err := n.validate(student); err != nil {
 			return err
+		}
+
+		if !student.IsPayed {
+			return nil
 		}
 
 		settings, err := n.notifySettingsSerivce.FindByStudentID(context.Background(), student.ID)
