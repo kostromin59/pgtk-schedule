@@ -77,9 +77,9 @@ func (p *payment) Validate() telebot.MiddlewareFunc {
 				Title:       "Подписка на весь учебный год",
 				Description: "Подписка для доступа к боту на весь учебный год. Подписка будет обнулена в конце следующего учебного года (август 2026). Для выпускников бесплатно, для этого напишите администратору с помощью команды /feedback.",
 				Currency:    "RUB",
-				Prices:      []telebot.Price{{Label: "99 рублей", Amount: 9900}},
+				Prices:      []telebot.Price{{Label: "159 рублей", Amount: 15900}},
 				Token:       p.paymentToken,
-				Total:       9900,
+				Total:       15900,
 				Payload:     fmt.Sprintf("%d", ctx.Sender().ID),
 			}
 
