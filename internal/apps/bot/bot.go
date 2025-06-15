@@ -95,7 +95,7 @@ func Run(cfg configs.Bot) error {
 	markup.Reply(telebot.Row{weekButton}, telebot.Row{todayButton, tomorrowButton})
 
 	bot.Handle("/start", func(ctx telebot.Context) error {
-		return ctx.Reply("Привет! Вышло обновление бота. Со следующего учебного года поддержка бота будет платной, потому что никто из студентов не хочет поддерживать бота. Необходимо будет оплачивать сервер каждый месяц. Подробнее можно спросить у @kostromin59.\n\nИспользуйте команду /feedback для обратной связи.", markup)
+		return ctx.Reply("Привет! Если хотите бесплатного бота, то попросите программистов захостить его. Подробнее можно спросить у @kostromin59.\n\nИспользуйте команду /feedback для обратной связи.", markup)
 	})
 	bot.Handle("/setstream", studentHandlers.SetStream(), studentHandlers.RegisteredStudent())
 	bot.Handle("/findteacher", teacherHandlers.Find(), studentHandlers.RegisteredStudent(), studentHandlers.ValidateStudent(), paymentHandlers.Validate())
