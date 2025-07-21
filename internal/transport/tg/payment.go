@@ -75,12 +75,28 @@ func (p *payment) Validate() telebot.MiddlewareFunc {
 
 			invoice := telebot.Invoice{
 				Title:       "Подписка на весь учебный год",
-				Description: "Подписка для доступа к боту на весь учебный год. Подписка будет обнулена в конце следующего учебного года (август 2026). Для выпускников бесплатно, для этого напишите администратору с помощью команды /feedback.",
+				Description: "Подписка для доступа к боту на весь учебный год. Подписка будет обнулена в конце следующего учебного года (август 2026).",
 				Currency:    "RUB",
 				Prices:      []telebot.Price{{Label: "159 рублей", Amount: 15900}},
 				Token:       p.paymentToken,
 				Total:       15900,
 				Payload:     fmt.Sprintf("%d", ctx.Sender().ID),
+				NeedEmail:   true,
+				SendEmail:   true,
+				Data: `{
+					"receipt": {
+					"items": [
+						{
+							"description": "Подписка на весь учебный год",
+							"quantity": "1.00",
+							"amount": {
+								"value": "159.00",
+								"currency": "RUB"
+							},
+							"vat_code": 1
+						}
+					]
+				}}`,
 			}
 
 			_, err := invoice.Send(p.bot, ctx.Sender(), nil)
