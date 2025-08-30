@@ -250,7 +250,12 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 	}
 
 	if index == -1 {
-		index = 0
+		for i, w := range weeks {
+			if w.Value == 1 {
+				index = i
+				break
+			}
+		}
 	}
 
 	if index == len(p.weeks)-1 {
