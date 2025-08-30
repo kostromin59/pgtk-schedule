@@ -236,6 +236,10 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 		return Week{}, err
 	}
 
+	if len(weeks) == 0 {
+		return Week{}, errors.New("current week not found")
+	}
+
 	now := time.Now().In(loc)
 	index := -1
 	for i, w := range weeks {
@@ -246,7 +250,7 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 	}
 
 	if index == -1 {
-		return Week{}, errors.New("current week not found")
+		index = 0
 	}
 
 	if index == len(p.weeks)-1 {
