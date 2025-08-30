@@ -249,13 +249,10 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 		}
 	}
 
+	isFoundSelected := true
 	if index == -1 {
-		for i, w := range weeks {
-			if w.Value == 1 {
-				index = i
-				break
-			}
-		}
+		isFoundSelected = false
+		index = 0
 	}
 
 	if index == len(p.weeks)-1 {
@@ -264,10 +261,16 @@ func (p *portal) currentWeek(weeks []Week) (Week, error) {
 
 	weekday := now.Weekday()
 	if weekday == time.Saturday && now.Hour() >= saturdayNextDayHours {
+		if !isFoundSelected {
+			index--
+		}
 		return weeks[index+1], nil
 	}
 
 	if weekday == time.Sunday {
+		if !isFoundSelected {
+			index--
+		}
 		return weeks[index+1], nil
 	}
 
