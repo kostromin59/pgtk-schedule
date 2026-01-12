@@ -287,7 +287,12 @@ func (p *portal) extractStudyYearId(html string) (string, error) {
 }
 
 func (p *portal) extractTerm(doc *goquery.Document) (string, error) {
-	opt := doc.Find("#termdiv").Find("select#term").Find("option[selected]").First()
+	terms := doc.Find("#termdiv").Find("select#term")
+	opt := terms.Find("option[selected]").First()
+
+	if time.Now().Month() < time.August {
+		opt = terms.Find("option").Last()
+	}
 
 	term, ok := opt.Attr("value")
 	if !ok {
