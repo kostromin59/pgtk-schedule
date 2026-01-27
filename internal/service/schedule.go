@@ -154,6 +154,11 @@ func (s *schedule) LessonsToString(lessons []models.Lesson) string {
 
 		for i, l := range lessons {
 			stringLesson := fmt.Sprintf("<b>%d)</b> %s (%s)\nПреподаватель: %s\nВремя: %s-%s\nКабинет: %s", i+1, l.Name, l.Type, l.Teacher, l.DateStart.Format("15:04"), l.DateEnd.Format("15:04"), l.Cabinet)
+			if l.Notes != nil && *l.Notes != "" {
+				stringLesson += "\n"
+				stringLesson += "Заметка: " + *l.Notes
+			}
+
 			sb.Grow(utf8.RuneCountInString(stringLesson) + 1)
 			sb.WriteString(stringLesson)
 			sb.WriteString("\n\n")

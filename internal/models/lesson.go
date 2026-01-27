@@ -20,4 +20,5 @@ type Lesson struct {
 	Substream string
 	DateStart time.Time
 	DateEnd   time.Time
+	Notes     *string
 }

@@ -204,6 +204,7 @@ func (p *portal) CurrentWeekLessons(stream, substream string) ([]models.Lesson, 
 			Stream:    fmt.Sprintf("%d", lesson.StreamID),
 			DateStart: combinedStartDateTime,
 			DateEnd:   combinedEndDateTime,
+			Notes:     lesson.Notes,
 		})
 	}
 
