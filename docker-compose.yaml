@@ -24,6 +24,7 @@ services:
       - ADMIN_ID=${ADMIN_ID}
       - DB_CONN=${DB_CONN}
       - PAYMENT_TOKEN=${PAYMENT_TOKEN}
+      - PROXY=${PROXY}
 
 volumes:
   postgres_data:

@@ -2,6 +2,8 @@ package bot
 
 import (
 	"log"
+	"net/http"
+	"net/url"
 	"pgtk-schedule/configs"
 	"pgtk-schedule/internal/api/portal"
 	"pgtk-schedule/internal/repository"
@@ -15,6 +17,11 @@ import (
 )
 
 func Run(cfg configs.Bot) error {
+	proxy, err := url.Parse(cfg.Proxy)
+	if err != nil {
+		return err
+	}
+
 	// Bot
 	pref := telebot.Settings{
 		Token: cfg.BotToken,
@@ -27,6 +34,11 @@ func Run(cfg configs.Bot) error {
 			AllowedUpdates: []string{"message", "chat_member", "pre_checkout_query", "callback_query", "poll", "inline_query"},
 		},
 		ParseMode: telebot.ModeHTML,
+		Client: &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxy),
+			},
+		},
 	}
 
 	bot, err := telebot.NewBot(pref)
@@ -129,10 +141,14 @@ func Run(cfg configs.Bot) error {
 		log.Println("schedule has been updated!")
 	}))
 
+	log.Println("started 1")
+
 	s.Start()
 	defer func() {
 		_ = s.Shutdown()
 	}()
+
+	log.Println("started")
 
 	bot.Start()
 
